@@ -1,0 +1,70 @@
+
+===== edit_scatter_sphere ===== 
+
+gui_section(style=form_style)
+
+gui_row(slider_row)
+"""count"""
+gui_slider("low: 1; high:100.0;", var="count")
+gui_row(separator)
+gui_blank()
+gui_row(input_row)
+s_x = "{x}"
+gui_input("desc: x", var="s_x")
+
+s_y = "{y}"
+gui_input("desc: y", var="s_y")
+s_z = "{z}"
+gui_input("desc: z", var="s_z")
+##############
+##
+gui_row(separator)
+gui_blank()
+gui_row(input_row)
+s_out = "{outer_r}"
+gui_input("desc: Radius radius", var="s_out")
+
+s_in = "{inner_r}"
+gui_input("desc: outer radius", var="s_in")
+#########################
+###
+gui_row(separator)
+gui_blank()
+gui_row(x_slider_row)
+"""x rotation"""
+gui_slider("low: 0; high:360.0;", var="ax")
+gui_row(y_slider_row)
+"""y rotation"""
+gui_slider("low: 0; high:360.0;", var="ay")
+gui_row(z_slider_row)
+"""z rotation"""
+gui_slider("low: 0; high:360.0;", var="az")
+
+gui_row(slider_row)
+gui_checkbox("text: ring;state: {ring_only}", var="ring_only")
+gui_row(slider_row)
+gui_checkbox("text: top only;state: {top_only}", var="top_only")
+
+
+
+await gui():
+    * "Apply":
+        x = int(s_x)
+        y = int(s_y)
+        z = int(s_z)
+       
+        outer_r = int(s_out)
+        inner_r = int(s_in)
+
+        task_schedule(apply_sphere)
+
+jump client_common
+
+==== apply_sphere ====
+
+await task_schedule(clear_objects)
+
+await task_schedule(apply_scatter, data={"vecs": scatter_sphere(int(count), x,y,z,outer_r, inner_r, top_only, ring_only)})
+
+yield success
+

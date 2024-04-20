@@ -1,0 +1,137 @@
+import helper.py
+
+shared avatar_widgets = ~~{
+"arvonian": [
+    {"label": "Eyes", "min": 0, "max":4}, 
+    {"label": "Mouth", "min": 0, "max":4}, 
+    {"label": "Crown", "min": 0, "max":4, "optional": True}, 
+    {"label": "Jewels", "min": 0, "max":4, "optional": True}], 
+"kralien": [
+    {"label": "Eyes", "min": 0, "max":4}, 
+    {"label": "Mouth", "min": 0, "max":4}, 
+    {"label": "Scalp", "min": 0, "max":4, "optional": True}, 
+    {"label": "Extra", "min": 0, "max":4, "optional": True}
+    ], 
+
+"skaraan": [
+    {"label": "Eyes", "min": 0, "max":4}, 
+    {"label": "Mouth", "min": 0, "max":4}, 
+    {"label": "Horn", "min": 0, "max":4, "optional": True}, 
+    {"label": "Hat", "min": 0, "max":4, "optional": True}
+    ], 
+
+"torgoth": [
+    {"label": "Eyes", "min": 0, "max":4}, 
+    {"label": "Mouth", "min": 0, "max":4}, 
+    {"label": "Hair", "min": 0, "max":4, "optional": True}, 
+    {"label": "Extra", "min": 0, "max":3, "optional": True},
+    {"label": "Hat", "min": 0, "max":0, "optional": True}
+    ], 
+
+
+"ximni": [
+    {"label": "Eyes", "min": 0, "max":4}, 
+    {"label": "Mouth", "min": 0, "max":4}, 
+    {"label": "Horns", "min": 0, "max":4, "optional": True}, 
+    {"label": "Mask", "min": 0, "max":2, "optional": True},
+    {"label": "Tattoo", "min": 0, "max":1, "optional": True}
+    ], 
+
+"terran": [
+    {"label": "Body", "min": 0, "max":1}, 
+    {"label": "Eyes", "min": 0, "max":9}, 
+    {"label": "Mouth", "min": 0, "max":9}, 
+    {"label": "Hair", "min": 0, "max":4, "optional": True}, 
+    {"label": "Long Hair", "min": 0, "max": 7, "optional": True},
+    {"label": "Facial Hair", "min": 0, "max":4, "optional": True},
+    {"label": "Extra", "min": 0, "max":4, "optional": True},
+    {"label": "Uniform", "min": 0, "max":9, "optional": True},
+    {"label": "Skin Tone", "min": 0, "max": len(faces.skin_tones)-1},
+    {"label": "Hair Tone", "min": 0, "max":len(faces.hair_tones)-1}
+    ]
+
+}~~
+
+shared gui_state = 'arv'
+shared race = "terran"
+shared avatar_face = faces.Characters.URSULA
+shared avatar_enable = list(itertools.repeat(True,10))
+shared avatar_cur = list(itertools.repeat(0,10))
+sl1 = 1.0
+sl2 = 1.0
+
+gui_reroute_server( character_editor_client_start)
+gui_reroute_clients(character_editor_client_start)
+
+
+===== character_editor_client_start ====
+
+
+gui_section(style="area: 35, 5, 65, 10;")
+"""Avatar Editor""""
+gui_section(style="area: 35, 10, 65, 45;")
+the_face = gui_face(char_editor_build_face(race, avatar_enable, avatar_cur))
+
+gui_section(style="area: 25, 46, 75, 46+2em;")
+
+race_pick = gui_drop_down("text:{race.capitalize()};list: Arvonian, Kralien, Skaraan, Terran, Torgoth, Ximni", var="race")
+on gui_message(race_pick):
+    race = race.lower()
+    avatar_enable = list(itertools.repeat(True,10))
+    avatar_cur = list(itertools.repeat(0,10))
+    jump character_editor_client_start
+
+gui_row()
+
+gui_section(style="area: 15, 56, 85, 95;row-height:35px;")
+
+widgets = avatar_widgets.get(race)
+
+jump config_error if widgets is None
+
+i = 0
+for widget in widgets:
+    if i%3 == 2:
+        gui_row( style="padding: 1px;")
+    
+    if race != "terran":
+        i += 1
+
+    label = widget["label"]
+    if "optional" in widget:
+        #enable = 1 if widget["optional"] == True else 0
+        enable = avatar_enable[i]
+        cb = gui_checkbox("text: {label};state:{enable}", data={"windex": i})
+        cb.value = enable
+        #
+        on gui_message(cb):
+           avatar_enable[windex] = not avatar_enable[windex]
+           the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
+           gui_represent(the_face)
+           
+
+        if widget["max"]>0:
+            sl = gui_int_slider("low: {widget['min']}; high: {widget['max']};", data={"windex": i})
+            on gui_message(sl):
+                avatar_cur[windex] = __ITEM__.value 
+                the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
+                gui_represent(the_face)
+    else:
+        """"text:{label}""""
+        sl = gui_int_slider("low: {widget['min']}; high: {widget['max']}; show_number: no", data={"windex": i})
+        on gui_message(sl):
+            avatar_cur[windex] = __ITEM__.value 
+            the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
+            gui_represent(the_face)
+
+    if race == "terran":
+        i += 1
+
+await gui() 
+
+
+========= config_error =========
+
+"""" Data is messed up """"
+
+await gui()

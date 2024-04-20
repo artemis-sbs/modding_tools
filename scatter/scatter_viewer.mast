@@ -1,0 +1,167 @@
+import arc.mast
+import box.mast
+import line.mast
+import box_fill.mast
+import ring.mast
+import ring_density.mast
+import sphere.mast
+
+
+shared objects = []
+
+slider_row = gui_style_def("row-height: 1.5em;padding: 6px,0,2px, 6px;")
+x_slider_row = gui_style_def("row-height: 1.5em;margin: 6px,0,2px, 6px;background:red;")
+y_slider_row = gui_style_def("row-height: 1.5em;margin: 6px,0,2px, 6px;background:green;")
+z_slider_row = gui_style_def("row-height: 1.5em;margin: 6px,0,2px, 6px;background:blue;")
+input_row = gui_style_def("row-height: 2em;padding: 6px,0,2px, 6px;")
+separator = gui_style_def("row-height: 20px;")
+form_style = gui_style_def("area: 0, 7, 20em, 100-2em;margin:5px,5px,5px,5px;padding:3px,13px,3px,3px;border-color: #fff3")
+
+
+counts = [10,20]
+count = 50
+cw = 10
+ch = 10
+cd = 5
+ca = 10
+cr = 10
+outer_r = 1000
+inner_r = 0
+
+x = 0
+y = 0 
+z = 0
+w = 1000
+h = 1000
+d = 50
+a_start = 0
+a_end = 45
+ax = 0
+ay = 0
+az = 0
+rand = False
+top_only = False
+ring_only = False
+
+gui_reroute_server( server_start)
+gui_reroute_clients(client_start)
+
+
+
+==== server_start ==== 
+sim_create()
+
+# Create a Invisible ship
+# and that's it for the server
+# Create an chase camera
+cambot = player_spawn(0,0,100, "cam", "camera", "invisible")
+shared camera = to_id(cambot)
+cambot.blob.set("reference_ring_3d_brightness", 0.0, 0)
+assign_client_to_ship(0,camera)
+
+
+sim_resume()
+
+
+============ client_start ==================
+menu = "sphere"
+what = "asteroid"
+
+dolly = 50
+orbit = 0
+
+
+============ client_common ==================
+
+assign_client_to_ship(client_id,camera)
+
+
+gui_activate_console("scatter")
+
+gui_section(style="area: 20em, 0, 100, 100;")
+gui_layout_widget("3dview")
+
+dl = gui_slider("low: 0; high:300.0;", style="col-width:20px;", var="dolly")
+gui_row("row-height: 20px;")
+ob = gui_slider("low: 10; high:360.0;", var="orbit")
+
+gui_row()
+gui_layout_widget("2dview")
+
+gui_section(style="area: 20px, 0, 20em, 33px;")
+todo = gui_drop_down("text: {menu}; list: arc, line, rect_fill, box_fill, box, ring, ring_density, sphere", var="menu")
+gui_drop_down("text: {what}; list: asteroid, nebula, station, ship", var="what")
+
+
+
+on gui_message(todo):
+    jump client_common
+
+# if either dolly or orbit changes
+on gui_message(ob): # + orbit:
+    source = Vec3(0,0, dolly * 10)
+    source = source.rotate_around(Vec3(0,0,0), 0, orbit, 0)
+    #set_pos(camera, source)
+    gui_cinematic_full_control(client_id, 0, source, 0, Vec3())
+
+on gui_message(dl): # + orbit:
+    source = Vec3(0,0, dolly * 10)
+    source = source.rotate_around(Vec3(0,0,0), 0, orbit, 0)
+    #set_pos(camera, source)
+    gui_cinematic_full_control(client_id, 0, source, 0, Vec3())
+
+
+match menu:
+    case "arc":
+        jump edit_scatter_arc
+    case "line":
+        jump edit_scatter_line
+    case "rect_fill":
+        jump edit_scatter_rect_fill
+    case "box_fill":
+        jump edit_scatter_box_fill
+    case "box":
+        jump edit_scatter_box
+    case "ring":
+        jump edit_scatter_ring
+    case "ring_density":
+        jump edit_scatter_ring_density
+    case "sphere":
+        jump edit_scatter_sphere
+
+await gui()
+jump client_common
+
+===== clear_objects ===== 
+for o in objects:
+    sbs.delete_object(o)
+objects=[]
+yield success
+
+==== apply_scatter ====
+await task_schedule(clear_objects)
+
+for v in vecs:
+    if what == "asteroid":
+        o = terrain_spawn(v.x, v.y, v.z, None, None, "plain_asteroid_6", "behav_asteroid")
+    elif what == "nebula":
+        o = terrain_spawn(v.x, v.y, v.z, None, None, "nebula", "behav_nebula")
+    elif what == "station":
+        o = terrain_spawn(v.x, v.y, v.z, None, None, "starbase_command", "behav_station")
+    else:
+        o = terrain_spawn(v.x, v.y, v.z, None, None, "tsn_battle_cruiser", "behav_npcship")
+    objects.append(to_id(o))
+
+yield success
+
+
+
+
+
+
+======= camera_orbit =========
+source = Vec3(0,0, dolly * -10 + -1000)
+track = Vec(0,0,0)
+# set_pos(camera, source)
+
+yield success
