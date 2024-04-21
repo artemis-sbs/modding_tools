@@ -38,6 +38,7 @@ sim_create()
 shared artemis =  to_id(player_spawn(0,0,0, "Artemis", "tsn", "tsn_light_cruiser"))
 set_face(artemis, random_terran())
 assign_client_to_ship(0,artemis)
+icons = [*range(147)]
 
 await task_schedule(rebuild_grid_items)
 sim_resume()
@@ -82,10 +83,8 @@ if last_ship_type != ship_type:
     hm = sbs.get_hull_map(artemis, True)
     #hm.art_file_root =ship_type
 
-    await task_schedule(rebuild_grid_items)
+    task_schedule(rebuild_grid_items)
 
-    #assign_client_to_ship(0,artemis)    
-    #assign_client_to_ship(client_id,artemis)
 
     last_ship_type = ship_type
 
@@ -165,6 +164,8 @@ jump finish_layout
 
 ========== editor_tools ============
 
+
+
 with content:
 
     with gui_sub_section() as a:
@@ -180,7 +181,7 @@ with content:
         #
         p_rls = set()
         rls = set()
-
+        
         for key in templates:
             _roles = templates[key].get("roles")
             continue if _roles is  None
@@ -200,11 +201,12 @@ with content:
         ts = "row-height: 1.5em;background:#1578;"
         primary_picker = gui_list_box(p_rls,"row-height: 1em; background:#1572;margin:0em, 1em;", item_template=roles_item_template, title_template=title, title_section_style= ts, select=True)
 
+
         title = "text:Roles;justify:center;"
         ts = "row-height: 1.5em;background:#1578;"
         role_picker = gui_list_box(rls,"row-height: 1em; background:#1572;margin:1em, 1em;", item_template=roles_item_template, title_template=title, title_section_style= ts, multi=True)
 
-        icons = [*range(147)]
+        
         icon = 0
 
         title = "text:Icon;justify:center;"
@@ -236,6 +238,9 @@ with content:
         title = "text:Grid Items;justify:center;"
         ts = "row-height: 1.5em;background:#1578;"
         grid_picker = gui_list_box(sel_grid_items,"row-height: 4em; background:#1572;margin:1em, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
+
+
+        
 
 on change template_picker.value:
     item = template_picker.value

@@ -17,7 +17,7 @@ from sbs_utils.procedural.gui import gui_reroute_server, gui_row, gui_button, gu
 from sbs_utils.procedural.execution import AWAIT
 from sbs_utils import fs
 
-start_text = f"text:This is an A >> \u0041 << Some custom glyphs >> \u0001 << AA ;font:gui-3;"
+start_text = f"text:This is an A >> \u0041 << Some custom glyphs >> \u0001 \u0080 << AA ;font:gui-3;"
 Mast.include_code = True
 mission_name = fs.get_mission_name()
 
