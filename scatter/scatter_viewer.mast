@@ -1,11 +1,3 @@
-# import arc.mast
-# import box.mast
-# import line.mast
-# import box_fill.mast
-# import ring.mast
-# import ring_density.mast
-# import sphere.mast
-
 
 shared objects = []
 
@@ -117,7 +109,7 @@ gui_reroute_clients(client_start)
         case "line":
             jump edit_scatter_line
         case "rect_fill":
-            jump edit_scatter_rect_fill
+            jump edit_scatter_rect_fill2
         case "box_fill":
             jump edit_scatter_box_fill
         case "box":
