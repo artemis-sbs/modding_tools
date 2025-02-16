@@ -79,7 +79,7 @@ await gui():
       
         task_schedule( apply_ring)
 
-jump client_common
+jump scatter_client_common
 
 ==== apply_ring ====
 await task_schedule(clear_objects)

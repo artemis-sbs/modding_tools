@@ -80,7 +80,7 @@ await gui():
       
         task_schedule(apply_ring_density)
 
-jump client_common
+jump scatter_client_common
 
 ==== apply_ring_density ====
 await task_schedule(clear_objects)

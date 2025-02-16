@@ -58,7 +58,7 @@ await gui():
 
         task_schedule(apply_sphere)
 
-jump client_common
+jump scatter_client_common
 
 ==== apply_sphere ====
 

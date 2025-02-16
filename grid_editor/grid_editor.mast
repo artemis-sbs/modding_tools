@@ -1,8 +1,8 @@
 import grid_editor.py
 
-route_grid_point("add_grid_object")
-route_grid_select("grid_comms")
-route_grid_focus("watch_sel")
+route_point_grid("add_grid_object")
+route_select_grid("grid_comms")
+route_focus_grid("watch_sel")
 
 shared started = False
 shared grid_data = None
@@ -25,554 +25,550 @@ shared pos_y = None
 gui_reroute_server(server_start)
 gui_reroute_clients(server_start)
 
-=========== server_start =======
-#
-# Create the player ship so the clients see it
-# This is a simple script that has one playable ship
-#
-sim_create()
-shared artemis =  to_id(player_spawn(0,0,0, "Artemis", "tsn", "tsn_light_cruiser"))
-assign_client_to_ship(0,artemis)
-icons = [*range(147)]
+=========== grid_editor_show
+    #
+    # Create the player ship so the clients see it
+    # This is a simple script that has one playable ship
+    #
+    sim_create()
+    shared artemis =  to_id(player_spawn(0,0,0, "Artemis", "tsn", "tsn_light_cruiser"))
+    assign_client_to_ship(0,artemis)
+    icons = [*range(147)]
 
 
-sim_resume()
-started=True
+    sim_resume()
+    started=True
 
 
 =========== grid_editor_client_start_once =======
-#
-# Hmmm why does this need to be last, 
-# Clients get run before the main is finished???
-#
-assign_client_to_ship(client_id,artemis)
-menu = 0
+    #
+    # Hmmm why does this need to be last, 
+    # Clients get run before the main is finished???
+    #
+    assign_client_to_ship(client_id,artemis)
+    menu = 0
 
 =========== grid_editor_client_start =======
 
-sbs.transparent_options_button(0,1)
+    sbs.transparent_options_button(0,1)
 
-#section_style = "padding: 1.5em,0.5em,0.5em,0.5em;"
-section_style =  "background: #0382;padding: 1em,1em,1em,1em;"
+    #section_style = "padding: 1.5em,0.5em,0.5em,0.5em;"
+    section_style =  "background: #0382;padding: 1em,1em,1em,1em;"
 
-gui_section("area:0,0,100,100;")
+    gui_section("area:0,0,100,100;")
 
-# Title bar
-gui_row("row-height:2em;background: #1573")
-gui_text("text:GRID EDITOR; justify: center;")
+    # Title bar
+    gui_row("row-height:2em;background: #1573")
+    gui_text("text:GRID EDITOR; justify: center;")
 
-gui_row()
-with gui_sub_section() as content:
-    with gui_sub_section("col-width:4em;"):
-        if grid_data is None:
-            menu_items = [{"icon": 94, "text": "load"}] 
-        else:
-            menu_items = [{"icon": 94, "text": "load"}, {"icon": 140, "text": "ship"},{"icon": 82, "text": "theme"}, {"icon": 26, "text": "edit"}]
+    gui_row()
+    with gui_sub_section() as content:
+        with gui_sub_section("col-width:4em;"):
+            if grid_data is None:
+                menu_items = [{"icon": 94, "text": "load"}] 
+            else:
+                menu_items = [{"icon": 94, "text": "load"}, {"icon": 140, "text": "ship"},{"icon": 82, "text": "theme"}, {"icon": 26, "text": "edit"}]
 
-        lb_menu = gui_list_box(menu_items,"row-height: 100px", item_template=grid_editor_menu_template, select=True)
-        lb_menu.set_selected_index(menu)
-    
-on change lb_menu.value:
-    menu = lb_menu.get_selected_index()
-    jump grid_editor_client_start
+            lb_menu = gui_list_box(menu_items,"row-height: 100px", item_template=grid_editor_menu_template, select=True)
+            lb_menu.set_selected_index(menu)
+        
+    on change lb_menu.value:
+        menu = lb_menu.get_selected_index()
+        jump grid_editor_client_start
 
 
-jump load_tools if menu == 0
-jump pick_ship_tools if menu == 1
-jump theme_tools if menu == 2
-jump editor_tools if menu == 3
+    jump load_tools if menu == 0
+    jump pick_ship_tools if menu == 1
+    jump theme_tools if menu == 2
+    jump editor_tools if menu == 3
 
-jump finish_layout
+    jump finish_layout
 
 ========== load_tools ============
 
-all = [{"mod": "Main Artemis data folder", "file": get_artemis_data_dir_filename("grid_data.json")}]
-if get_mission_has_grid_data():
-    all.append({"mod": "this mission", "file": get_mission_dir_filename("grid_data.json")})
-mods = get_mod_dirs_with_grid_data()
-for m in mods:
-    mod = m.get("mod")
-    file = m.get("file")
-    all.append({"mod":mod, "file":file})
+    all = [{"mod": "Main Artemis data folder", "file": get_artemis_data_dir_filename("grid_data.json")}]
+    if get_mission_has_grid_data():
+        all.append({"mod": "this mission", "file": get_mission_dir_filename("grid_data.json")})
+    mods = get_mod_dirs_with_grid_data()
+    for m in mods:
+        mod = m.get("mod")
+        file = m.get("file")
+        all.append({"mod":mod, "file":file})
 
 
 
-ts = "row-height: 1.5em;background:#1578;"
-with content:
-    with gui_sub_section():
-        gui_row("row-height:3em;")
-        """{grid_data_file_name} is current open. Select a file and the press load to load new data"""
-        gui_row()
-        gd_picker = gui_list_box(all,"margin:1em,1em,1em,1em;row-height: 1em; background:#1572;", item_template=grid_data_files_item_template, title_template=grid_data_files_title_template, title_section_style= ts, select=True)
-        gui_row("row-height:3em;")
-        bb = gui_button("Load", style="margin:1em,0.1em,1em,0.5em;")
-        on gui_message(bb):
-            grid_data_file_ = gd_picker.get_value()
-            if grid_data_file_ is not None:
-                grid_data_mod_name = grid_data_file_.get("mod")
-                grid_data_file_name = grid_data_file_.get("file")
-                await task_schedule(load_data)
-                jump grid_editor_client_start
+    ts = "row-height: 1.5em;background:#1578;"
+    with content:
+        with gui_sub_section():
+            gui_row("row-height:3em;")
+            """{grid_data_file_name} is current open. Select a file and the press load to load new data"""
+            gui_row()
+            gd_picker = gui_list_box(all,"margin:1em,1em,1em,1em;row-height: 1em; background:#1572;", item_template=grid_data_files_item_template, title_template=grid_data_files_title_template, title_section_style= ts, select=True)
+            gui_row("row-height:3em;")
+            bb = gui_button("Load", style="margin:1em,0.1em,1em,0.5em;")
+            on gui_message(bb):
+                grid_data_file_ = gd_picker.get_value()
+                if grid_data_file_ is not None:
+                    grid_data_mod_name = grid_data_file_.get("mod")
+                    grid_data_file_name = grid_data_file_.get("file")
+                    await task_schedule(load_data)
+                    jump grid_editor_client_start
 
 
-jump finish_layout
+    jump finish_layout
 
 ========== pick_ship_tools ============
 
-with content:
-    ship_picker = ship_picker_control("Select Ship", ship_type)
-    ship_select = gui_content(ship_picker)
+    with content:
+        ship_picker = ship_picker_control("Select Ship", ship_type)
+        ship_select = gui_content(ship_picker)
 
-on change ship_select.value:
-    ship_type = ship_select.value
-    jump grid_editor_client_start
+    on change ship_select.value:
+        ship_type = ship_select.value
+        jump grid_editor_client_start
 
-jump finish_layout
+    jump finish_layout
 
 
 ========== theme_tools ============
 
-with content:
-    with gui_sub_section() as a:
+    with content:
+        with gui_sub_section() as a:
 
-        rls = []
-        for key in templates:
-            _roles = templates[key].get("roles")
-            if _roles is not None:
-                main = _roles.split(",")
-                main = main[0]
+            rls = []
+            for key in templates:
+                _roles = templates[key].get("roles")
+                if _roles is not None:
+                    main = _roles.split(",")
+                    main = main[0]
 
-        title = "text:Role;justify:center;"
-        ts = "row-height: 1.5em;background:#1578;"
-        role_picker = gui_list_box(rls,"row-height: 1em; background:#1572;", item_template=roles_item_template, title_template=title, title_section_style= ts, select=True)
+            title = "text:Role;justify:center;"
+            ts = "row-height: 1.5em;background:#1578;"
+            role_picker = gui_list_box(rls,"row-height: 1em; background:#1572;", item_template=roles_item_template, title_template=title, title_section_style= ts, select=True)
 
-        
+            
 
-jump finish_layout
+    jump finish_layout
 
 ========== editor_tools ============
 
-if grid_data.get(ship_type) is None:
-    grid_data[ship_type] = {"grid_objects":[]}
+    if grid_data.get(ship_type) is None:
+        grid_data[ship_type] = {"grid_objects":[]}
 
-shared internal_items = grid_data[ship_type]["grid_objects"]
-if last_ship_type != ship_type:
-    #
-    # For now create a new ship
-    #
-    shared selection_go=None
-    print("CLEAR")
-    shared pos_x = None
-    shared pos_y = None
- 
-    task_schedule(rebuild_grid_items)
-
-
-    last_ship_type = ship_type
-
-
-gui_activate_console("engineer")
-
-
-with content:
-
-    with gui_sub_section() as a:
-        # gui_section(style="area: 10, 0, 30, 45;row-height:3em;")
-        gui_row( style="row-height: 3em;padding:0,10px,0,0;")
-        """justify: center;text: Grid Item Properties""" 
-        gui_row( style="row-height: 60px;padding:0,10px,0,0;")
-        name_input = gui_input("desc: Name;" , var="item_name")
-
-        gui_row( style="row-height: 25;padding:4px,0,4px,0;")
+    shared internal_items = grid_data[ship_type]["grid_objects"]
+    if last_ship_type != ship_type:
         #
-        # Split into primary and secondary roles
+        # For now create a new ship
         #
-        p_rls = set()
-        rls = set()
-        
-        for key in templates:
-            _roles = templates[key].get("roles")
-            continue if _roles is  None
+        shared selection_go=None
+        print("CLEAR")
+        shared pos_x = None
+        shared pos_y = None
+    
+        task_schedule(rebuild_grid_items)
 
-            all_rls = _roles.lower().split(",")
-            if len(all_rls) >1:
-                rls.update(set(all_rls[1:]))
 
-            if len(all_rls) >0:
-                p_rls.add(all_rls[0])
+        last_ship_type = ship_type
+
+
+    gui_activate_console("engineer")
+
+
+    with content:
+
+        with gui_sub_section() as a:
+            # gui_section(style="area: 10, 0, 30, 45;row-height:3em;")
+            gui_row( style="row-height: 3em;padding:0,10px,0,0;")
+            """justify: center;text: Grid Item Properties""" 
+            gui_row( style="row-height: 60px;padding:0,10px,0,0;")
+            name_input = gui_input("desc: Name;" , var="item_name")
+
+            gui_row( style="row-height: 25;padding:4px,0,4px,0;")
+            #
+            # Split into primary and secondary roles
+            #
+            p_rls = set()
+            rls = set()
+            
+            for key in templates:
+                _roles = templates[key].get("roles")
+                continue if _roles is  None
+
+                all_rls = _roles.lower().split(",")
+                if len(all_rls) >1:
+                    rls.update(set(all_rls[1:]))
+
+                if len(all_rls) >0:
+                    p_rls.add(all_rls[0])
+                
+
+            rls=list(rls)
+            p_rls=list(p_rls)
+
+            title = "text:Primary;justify:center;"
+            ts = "row-height: 1.5em;background:#1578;"
+            primary_picker = gui_list_box(p_rls,"row-height: 1em; background:#1572;margin:0em, 1em;", item_template=roles_item_template, title_template=title, title_section_style= ts, select=True)
+
+
+            title = "text:Roles;justify:center;"
+            ts = "row-height: 1.5em;background:#1578;"
+            role_picker = gui_list_box(rls,"row-height: 1em; background:#1572;margin:1em, 1em;", item_template=roles_item_template, title_template=title, title_section_style= ts, multi=True)
+
+            
+            icon = 0
+
+            title = "text:Icon;justify:center;"
+            ts = "row-height: 1.5em;background:#1578;"
+            icon_picker = gui_list_box(icons,"row-height: 2em; padding:3px,3px; background:#1572;margin:1em, 1em;", item_template=icon_item_template, title_template=title, title_section_style= ts, select=True)
+
+
+            gui_row( style="row-height: 3em;margin:0em, 1em;")
+            gui_text("text:scale;font:gui-3;justify:center;","col-width:7em; margin:0,0,1em;")
+            gui_slider("low: 0.1;high:5.0;", var="item_scale")
+
+            gui_row()    
+            #t = list(templates.values())
+            t = []
+            for key in sorted(templates.keys(), key=lambda x: x.lower()):
+                t.append(templates[key])
+
+            title = "text:Template;justify:center;"
+            ts = "row-height: 1.5em;background:#1578;"
+            template_picker = gui_list_box(t,"row-height: 4em; background:#1572;margin:0, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
+            
+            sel_grid_items = []
+            for item in internal_items:
+                x = item["x"]
+                y = item["y"]
+                if x == pos_x and y == pos_y:
+                    sel_grid_items.append(item)
+
+            title = "text:Grid Items;justify:center;"
+            ts = "row-height: 1.5em;background:#1578;"
+            grid_picker = gui_list_box(sel_grid_items,"row-height: 4em; background:#1572;margin:1em, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
+
+
             
 
-        rls=list(rls)
-        p_rls=list(p_rls)
-
-        title = "text:Primary;justify:center;"
-        ts = "row-height: 1.5em;background:#1578;"
-        primary_picker = gui_list_box(p_rls,"row-height: 1em; background:#1572;margin:0em, 1em;", item_template=roles_item_template, title_template=title, title_section_style= ts, select=True)
-
-
-        title = "text:Roles;justify:center;"
-        ts = "row-height: 1.5em;background:#1578;"
-        role_picker = gui_list_box(rls,"row-height: 1em; background:#1572;margin:1em, 1em;", item_template=roles_item_template, title_template=title, title_section_style= ts, multi=True)
-
-        
-        icon = 0
-
-        title = "text:Icon;justify:center;"
-        ts = "row-height: 1.5em;background:#1578;"
-        icon_picker = gui_list_box(icons,"row-height: 2em; padding:3px,3px; background:#1572;margin:1em, 1em;", item_template=icon_item_template, title_template=title, title_section_style= ts, select=True)
-
-
-        gui_row( style="row-height: 3em;margin:0em, 1em;")
-        gui_text("text:scale;font:gui-3;justify:center;","col-width:7em; margin:0,0,1em;")
-        gui_slider("low: 0.1;high:5.0;", var="item_scale")
-
-        gui_row()    
-        #t = list(templates.values())
-        t = []
-        for key in sorted(templates.keys(), key=lambda x: x.lower()):
-            t.append(templates[key])
-
-        title = "text:Template;justify:center;"
-        ts = "row-height: 1.5em;background:#1578;"
-        template_picker = gui_list_box(t,"row-height: 4em; background:#1572;margin:0, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
-        
-        sel_grid_items = []
-        for item in internal_items:
-            x = item["x"]
-            y = item["y"]
-            if x == pos_x and y == pos_y:
-                sel_grid_items.append(item)
-
-        title = "text:Grid Items;justify:center;"
-        ts = "row-height: 1.5em;background:#1578;"
-        grid_picker = gui_list_box(sel_grid_items,"row-height: 4em; background:#1572;margin:1em, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
-
-
-        
-
-on change template_picker.value:
-    item = template_picker.value
-    item_name = item['name']
-    item_roles = item['roles']
-    item_scale = item['scale']
-   
-    # Update gui in place
-    icon_picker.set_selected_index(item["icon"])
-    gui_represent(name_input)
+    on change template_picker.value:
+        item = template_picker.value
+        item_name = item['name']
+        item_roles = item['roles']
+        item_scale = item['scale']
+    
+        # Update gui in place
+        icon_picker.set_selected_index(item["icon"])
+        gui_represent(name_input)
 
 ========== show_hull_grid  ============
 
-with gui_sub_section() as internal:
-    gui_layout_widget("ship_internal_view")
+    with gui_sub_section() as internal:
+        gui_layout_widget("ship_internal_view")
 
 
 ====== finish_layout ===== 
 
+    await gui()
 
-
-await gui()
-
-print("Did the propimse crash?")
-
-==== excpe =====
-print("Something shady happened")
-jump grid_editor_client_start
+==== excape =====
+    print("Something shady happened")
+    jump grid_editor_client_start
 
 
 ===== add_grid_object ========
 
-shared pos_x = EVENT.source_point.x 
-shared pos_y = EVENT.source_point.y
+    shared pos_x = EVENT.source_point.x 
+    shared pos_y = EVENT.source_point.y
 
-sel_grid_items = []
-for item in internal_items:
-    x = item["x"]
-    y = item["y"]
-    if x == pos_x and y == pos_y:
-        sel_grid_items.append(item)
+    sel_grid_items = []
+    for item in internal_items:
+        x = item["x"]
+        y = item["y"]
+        if x == pos_x and y == pos_y:
+            sel_grid_items.append(item)
 
-grid_picker.items = sel_grid_items
-gui_represent(grid_picker)
-
-
-->END
+    grid_picker.items = sel_grid_items
+    gui_represent(grid_picker)
 
 
-#
-# Check if this is a selection not an add
-#
+    ->END
 
-for g_id in items:
-    item = items.get(g_id)
-    ->END if item is None
- 
-    item = item.get("item")
-    ->END if item is None
+
+    #
+    # Check if this is a selection not an add
+    #
+
+    for g_id in items:
+        item = items.get(g_id)
+        ->END if item is None
     
-    if item["x"] == pos_x and item["y"] == pos_y:
-        # Found existing item
-        COMMS_SELECTED_ID = g_id
-        jump update_selection
+        item = item.get("item")
+        ->END if item is None
+        
+        if item["x"] == pos_x and item["y"] == pos_y:
+            # Found existing item
+            COMMS_SELECTED_ID = g_id
+            jump update_selection
 
 ==== add_grid_object_common ===
 
-#print (f"{item_name} {item_roles} '{item_color.value}' '{item_icon.value}'")
-#print(f"{pos_x} {pos_y}")
+    #print (f"{item_name} {item_roles} '{item_color.value}' '{item_icon.value}'")
+    #print(f"{pos_x} {pos_y}")
 
-#
-# Add needs to have the values: e.g. name, roles
-#
-->END if item_name is None or item_name == ""
-->END if item_roles is None or item_roles == ""
-# ->END if pos_x is None or pos_y is None
-
-
-#print("Update1")
-icon = int(item_icon.value[0])
-color = item_color.value[0]
-g = ~~ {
-    "x": pos_x, 
-    "y":pos_y, 
-    "icon": icon, 
-    "name":item_name, 
-    "color": color, 
-    "scale": item_scale,
-    "roles": item_roles
-}~~
-i = len(internal_items)
-go =  grid_spawn(artemis,  g["name"], f"gol:{i}", g["x"], g["y"], g["icon"], g["color"], g["roles"])
-
-go.blob.set("icon_scale", item_scale, 0)
-blob = to_blob(artemis)
-# blob.set("grid_selected_UID", go.id, 0)
-gid = go.id
-follow_route_grid_select(artemis, gid)
-
-items[go.id] = {"index": i, "go": go, "item": g}
-~~templates[g['name']] = g~~
-internal_items.append(g) 
-await task_schedule(save_data)
-COMMS_SELECTED_ID = to_id(go)
-await task_schedule(update_selection)
-
-gui_refresh("grid_editor_client_start")
+    #
+    # Add needs to have the values: e.g. name, roles
+    #
+    ->END if item_name is None or item_name == ""
+    ->END if item_roles is None or item_roles == ""
+    # ->END if pos_x is None or pos_y is None
 
 
-->END
+    #print("Update1")
+    icon = int(item_icon.value[0])
+    color = item_color.value[0]
+    g = ~~ {
+        "x": pos_x, 
+        "y":pos_y, 
+        "icon": icon, 
+        "name":item_name, 
+        "color": color, 
+        "scale": item_scale,
+        "roles": item_roles
+    }~~
+    i = len(internal_items)
+    go =  grid_spawn(artemis,  g["name"], f"gol:{i}", g["x"], g["y"], g["icon"], g["color"], g["roles"])
+
+    go.blob.set("icon_scale", item_scale, 0)
+    blob = to_blob(artemis)
+    # blob.set("grid_selected_UID", go.id, 0)
+    gid = go.id
+    follow_route_select_grid(artemis, gid)
+
+    items[go.id] = {"index": i, "go": go, "item": g}
+    ~~templates[g['name']] = g~~
+    internal_items.append(g) 
+    await task_schedule(save_data)
+    COMMS_SELECTED_ID = to_id(go)
+    await task_schedule(update_selection)
+
+    gui_refresh("grid_editor_client_start")
+
+
+    ->END
 
 ====== rebuild_grid_items =====
-#
-# Clear
-#
+    #
+    # Clear
+    #
 
-so =  sim.get_space_object(artemis)
-so.data_tag = ship_type
-hm = sbs.get_hull_map(artemis, True)
+    so =  sim.get_space_object(artemis)
+    so.data_tag = ship_type
+    hm = sbs.get_hull_map(artemis, True)
 
-if grid_data.get(ship_type) is None:
-    grid_data[ship_type] = {"grid_objects":[]}
-
-
-first = list(grid_data.keys())[0]
-shared internal_items = grid_data[first]["grid_objects"]
+    if grid_data.get(ship_type) is None:
+        grid_data[ship_type] = {"grid_objects":[]}
 
 
-# add back the grid items as they are now
-i = 0
-shared items = {}
+    first = list(grid_data.keys())[0]
+    shared internal_items = grid_data[first]["grid_objects"]
 
-for g in internal_items:
-    go =  grid_spawn(artemis,  g["name"], f"gol:{i}", g["x"], g["y"], g["icon"], g["color"], g["roles"])
-    go.blob.set("icon_scale", g["scale"], 0)
-    items[go.id] = {"index": i, "go": go, "item": g}
-    i+=1
 
-yield success
+    # add back the grid items as they are now
+    i = 0
+    shared items = {}
+
+    for g in internal_items:
+        go =  grid_spawn(artemis,  g["name"], f"gol:{i}", g["x"], g["y"], g["icon"], g["color"], g["roles"])
+        go.blob.set("icon_scale", g["scale"], 0)
+        items[go.id] = {"index": i, "go": go, "item": g}
+        i+=1
+
+    yield success
 
 
 ====== clear_grid_items =====
 
-# Delete all grid objects
-for k in items:
-    #go = items[k]
-    # delete by id
-    sbs.delete_grid_object(artemis, k)
+    # Delete all grid objects
+    for k in items:
+        #go = items[k]
+        # delete by id
+        sbs.delete_grid_object(artemis, k)
 
-yield success
+    yield success
 
 
 === update_selection ====
 
-blob = to_blob(artemis)
-blob.set("grid_selected_UID", COMMS_SELECTED_ID, 0)
-follow_route_grid_select(artemis, COMMS_SELECTED_ID)
+    blob = to_blob(artemis)
+    blob.set("grid_selected_UID", COMMS_SELECTED_ID, 0)
+    follow_route_select_grid(artemis, COMMS_SELECTED_ID)
 
-if selection_go is not None:
-    # set pos
-    blob = to_blob(COMMS_SELECTED_ID)
-    x = blob.get("curx", 0)
-    y = blob.get("cury", 0)
-    selection_go.blob.set("curx", x)
-    selection_go.blob.set("cury", y)
-    pos_x = x
-    pos_y = y
-else:
-    #create it
-    blob = to_blob(COMMS_SELECTED_ID)
-    x = blob.get("curx", 0)
-    y = blob.get("cury", 0)
-    pos_x = x
-    pos_y = y
-    shared selection_go =  grid_spawn(artemis,  "selection", "sel1", x, y, 56, "black", "#")
-    #print (selection_go)
-    selection_go.blob.set("icon_scale",  2.0)
+    if selection_go is not None:
+        # set pos
+        blob = to_blob(COMMS_SELECTED_ID)
+        x = blob.get("curx", 0)
+        y = blob.get("cury", 0)
+        selection_go.blob.set("curx", x)
+        selection_go.blob.set("cury", y)
+        pos_x = x
+        pos_y = y
+    else:
+        #create it
+        blob = to_blob(COMMS_SELECTED_ID)
+        x = blob.get("curx", 0)
+        y = blob.get("cury", 0)
+        pos_x = x
+        pos_y = y
+        shared selection_go =  grid_spawn(artemis,  "selection", "sel1", x, y, 56, "black", "#")
+        #print (selection_go)
+        selection_go.blob.set("icon_scale",  2.0)
 
-yield success
+    yield success
 
-->END
+    ->END
 
 ====== grid_comms =====
 
-#print("Changing select")
+    #print("Changing select")
 
 
-await comms():
- + "update":
-        item = items[COMMS_SELECTED_ID]["item"]
-        index = items[COMMS_SELECTED_ID]["index"]
-        go = to_object(COMMS_SELECTED_ID)
-        #
-        # Take the current values and make that this item
-        #
-        if item_name is not None and item_name != "" and  item_roles is not None and item_roles != "":
-            icon = int(item_icon.value[0])
-            color = item_color.value[0]
-            blob = to_blob(COMMS_SELECTED_ID)
-            blob.set("icon_index", icon, 0)
-            blob.set("icon_scale", item_scale, 0)
-            blob.set("icon_color", color , 0)
-
-            ~~item["name"] = item_name~~
-            ~~item["icon"] = icon~~
-            ~~item["roles"] = item_roles~~
-            ~~item["color"] = color~~
-            ~~item["scale"] = item_scale~~
-
+    await comms():
+    + "update":
+            item = items[COMMS_SELECTED_ID]["item"]
+            index = items[COMMS_SELECTED_ID]["index"]
+            go = to_object(COMMS_SELECTED_ID)
             #
-            # Set the tag to the first role
+            # Take the current values and make that this item
             #
-            roles = item_roles.split(",")
-            got = roles[0].strip()
-            go.set_go_type(got)
-            go.set_name(item_name)
-  + "delete": 
-        # delete the item
-        sbs.delete_grid_object(artemis, COMMS_SELECTED_ID)
-        go = items.pop(COMMS_SELECTED_ID, None)
-        
-        if go is not None:
-            # print (f"{go}")
-            internal_items.remove(go["item"])
+            if item_name is not None and item_name != "" and  item_roles is not None and item_roles != "":
+                icon = int(item_icon.value[0])
+                color = item_color.value[0]
+                blob = to_blob(COMMS_SELECTED_ID)
+                blob.set("icon_index", icon, 0)
+                blob.set("icon_scale", item_scale, 0)
+                blob.set("icon_color", color , 0)
 
-       ->END
+                ~~item["name"] = item_name~~
+                ~~item["icon"] = icon~~
+                ~~item["roles"] = item_roles~~
+                ~~item["color"] = color~~
+                ~~item["scale"] = item_scale~~
 
-await task_schedule(save_data)
+                #
+                # Set the tag to the first role
+                #
+                roles = item_roles.split(",")
+                got = roles[0].strip()
+                go.set_go_type(got)
+                go.set_name(item_name)
+    + "delete": 
+            # delete the item
+            sbs.delete_grid_object(artemis, COMMS_SELECTED_ID)
+            go = items.pop(COMMS_SELECTED_ID, None)
+            
+            if go is not None:
+                # print (f"{go}")
+                internal_items.remove(go["item"])
 
-jump grid_comms
+        ->END
+
+    await task_schedule(save_data)
+
+    jump grid_comms
 
 
 
 ===== watch_sel =====
 
-#
-# This watches for anytime the selection changes 
-# in parallel with the await comms
-#
-->END if GRID_SELECTED_ID is None
-item = items.get(GRID_SELECTED_ID)
-->END if item is None
+    #
+    # This watches for anytime the selection changes 
+    # in parallel with the await comms
+    #
+    ->END if GRID_SELECTED_ID is None
+    item = items.get(GRID_SELECTED_ID)
+    ->END if item is None
 
-if selection_go is not None:
-    # set pos
-    blob = to_blob(GRID_SELECTED_ID)
-    x = blob.get("curx", 0)
-    y = blob.get("cury", 0)
-    pos_x = x
-    pos_y = y
-    selection_go.blob.set("curx", x)
-    selection_go.blob.set("cury", y)
-else:
-    #create it
-    blob = to_blob(GRID_SELECTED_ID)
-    x = blob.get("curx", 0)
-    y = blob.get("cury", 0)
-    pos_x = x
-    pos_y = y
-    shared selection_go =  grid_spawn(artemis,  "selection", "sel1", x, y, 56, "black", "#")
-    #print (selection_go)
-    selection_go.blob.set("icon_scale",  2.0)
+    if selection_go is not None:
+        # set pos
+        blob = to_blob(GRID_SELECTED_ID)
+        x = blob.get("curx", 0)
+        y = blob.get("cury", 0)
+        pos_x = x
+        pos_y = y
+        selection_go.blob.set("curx", x)
+        selection_go.blob.set("cury", y)
+    else:
+        #create it
+        blob = to_blob(GRID_SELECTED_ID)
+        x = blob.get("curx", 0)
+        y = blob.get("cury", 0)
+        pos_x = x
+        pos_y = y
+        shared selection_go =  grid_spawn(artemis,  "selection", "sel1", x, y, 56, "black", "#")
+        #print (selection_go)
+        selection_go.blob.set("icon_scale",  2.0)
 
 
-item = item["item"]
+    item = item["item"]
 
-index = items[GRID_SELECTED_ID]["index"]
-go = to_object(GRID_SELECTED_ID)
-#
-# Change the GUI form to these values
-#
-item_name = item["name"]
-item_roles = item["roles"]
-item_scale = item["scale"]
-# Set the selection of the icons
-item_icon.content.selected = set()
-item_icon.content.selected.add(item["icon"])
+    index = items[GRID_SELECTED_ID]["index"]
+    go = to_object(GRID_SELECTED_ID)
+    #
+    # Change the GUI form to these values
+    #
+    item_name = item["name"]
+    item_roles = item["roles"]
+    item_scale = item["scale"]
+    # Set the selection of the icons
+    item_icon.content.selected = set()
+    item_icon.content.selected.add(item["icon"])
 
-# set selection for color
-color = colors.index(item["color"])
-item_color.content.selected = set()
-item_color.content.selected.add(color)
+    # set selection for color
+    color = colors.index(item["color"])
+    item_color.content.selected = set()
+    item_color.content.selected.add(color)
 
-gui_reroute_server(grid_editor_client_start)
+    gui_reroute_server(grid_editor_client_start)
 
-->END
+    ->END
 
 ===== save_data =====
-save_json_data(get_mission_dir_filename("grid_data.json"), grid_data)
-yield success
+    save_json_data(get_mission_dir_filename("grid_data.json"), grid_data)
+    yield success
 
 ===== load_data =====
 
-# Expect it to load, i.e. don't use previous data
-shared grid_data = load_json_data(grid_data_file_name)
-#
-# Save a Backup
-#
-yield fail if grid_data is None
+    # Expect it to load, i.e. don't use previous data
+    shared grid_data = load_json_data(grid_data_file_name)
+    #
+    # Save a Backup
+    #
+    yield fail if grid_data is None
 
-if grid_data_file_name.startswith("extra"):
-    merge_mod_ship_data(grid_data_mod_name)
-    reset_ship_data_caches()
+    if grid_data_file_name.startswith("extra"):
+        merge_mod_ship_data(grid_data_mod_name)
+        reset_ship_data_caches()
 
-save_json_data(grid_data_file_name+".bak", grid_data)
-# Make a 'set' of templates, using key as the unique value
-shared templates = {}
+    save_json_data(grid_data_file_name+".bak", grid_data)
+    # Make a 'set' of templates, using key as the unique value
+    shared templates = {}
 
-for ship in grid_data.values():
-    gos = ship['grid_objects']
-    for item in gos:
-        ~~templates[item['name']] = item~~
+    for ship in grid_data.values():
+        gos = ship['grid_objects']
+        for item in gos:
+            ~~templates[item['name']] = item~~
 
-await task_schedule(rebuild_grid_items)
+    await task_schedule(rebuild_grid_items)
 
 
-yield success
+    yield success
 
 ==== recycle_ship =====
-await delay_sim(5)
-sbs.delete_object(old_ship)
-->END
+    await delay_sim(5)
+    sbs.delete_object(old_ship)
+    ->END
 
 
 =========== client_start =======
-"""" This is an application with only one view one the server """"
-await gui()
+    """" This is an application with only one view one the server """"
+    await gui()

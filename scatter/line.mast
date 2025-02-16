@@ -47,7 +47,7 @@ await gui():
 
         task_schedule(apply_scatter_line)
 
-jump client_common
+jump scatter_client_common
 
 ==== apply_scatter_line ====
 await task_schedule(clear_objects)

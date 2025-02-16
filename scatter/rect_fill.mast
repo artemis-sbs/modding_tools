@@ -49,7 +49,7 @@ await gui():
         d = int(s_d)
         task_schedule(apply_rect_fill)
 
-jump client_common
+jump scatter_client_common
 
 ==== apply_rect_fill ====
 await task_schedule(clear_objects)

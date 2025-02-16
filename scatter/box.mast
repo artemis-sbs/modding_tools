@@ -50,7 +50,7 @@ await gui():
         d = int(s_d)
         task_schedule(apply_box)
 
-jump client_common
+jump scatter_client_common
 
 ==== apply_box ====
 await task_schedule(clear_objects)

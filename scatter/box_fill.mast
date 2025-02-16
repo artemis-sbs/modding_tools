@@ -1,5 +1,5 @@
 
-===== edit_scatter_rect_fill ===== 
+===== edit_scatter_rect_fill2 ===== 
 box_rect = True
 jump edit_scatter_box_rect_fill
 
@@ -77,7 +77,7 @@ await gui():
         d = int(s_d)
         task_schedule(apply_box_fill)
 
-jump client_common
+jump scatter_client_common
 
 ==== apply_box_fill ====
 
