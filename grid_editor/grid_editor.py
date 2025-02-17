@@ -1,6 +1,9 @@
 from sbs_utils.procedural.gui import gui_row, gui_text, gui_icon, gui_sub_section, gui_blank
 from sbs_utils import fs
 from sbs_utils.procedural.execution import get_shared_variable
+from sbs_utils.procedural.ship_data import get_ship_data
+from sbs_utils.pages.widgets.layout_listbox import LayoutListBoxHeader
+from sbs_utils.mast.mast_node import MastDataObject
 
 import os
 
@@ -18,7 +21,65 @@ def history_item_template(item):
         gui_row("row-height: 1em;")
         roles = item['roles'].replace(",", " ")
         gui_text(f"text:{roles};justify: left;font:gui-2;color:{color};")
+
+
+def get_ship_data_listbox_data():
+    sd = get_ship_data()
+    sl = sd.get("#ship-list", [])
+
+    ships = {}
+    for s in sl:
+        side = s.get("side")
+        key  = s.get("key")
+        name  = s.get("name")
+        roles  = s.get("roles")
+
+        if roles is None:
+            continue
+        
+        l = ships.get(side, [])
+        l.append({"key": key, "name": name, "roles": roles})
+        ships[side] = l
     
+    ret = []
+    for k in ships:
+        #item = {"name": k, "collapse": True}
+        ret.append(LayoutListBoxHeader(k, True))
+        l = ships[k]
+        for s in l:
+            key  = s.get("key")
+            name  = s.get("name")
+            roles  = s.get("roles")
+
+            ret.append( MastDataObject({"key": key, "name": name, "roles": roles}))
+
+
+    print(len(ret))
+    return ret
+    
+
+
+
+
+
+def ship_item_template(item):
+    if isinstance(item, LayoutListBoxHeader):
+        gui_row("row-height: 1em;padding:5px,0,5px,0;")
+        if not item.collapse:
+            label = f"- {item.label}"
+            gui_text(f"$text:{label};justify: left;color:#02FF;", "background: #FFFC")
+        else:
+            label = f"+ {item.label}"
+            gui_text(f"$text:{label};justify: left;color:#FFF;", "background: #0173")
+        return
+    
+    key  = item.key
+    name  = item.name
+    roles  = item.roles
+    gui_row("row-height: 1.5em;padding:23px;")
+    gui_text(f"text:{name};justify: left;")
+
+
 def roles_item_template(item):
     gui_row("row-height: 1.5em;padding:3px;")
     gui_text(f"text:{item};justify: left;")
@@ -32,9 +93,9 @@ def grid_data_files_title_template():
 
 def grid_data_files_item_template(item):
     gui_row("row-height: 1.5em;padding:3px;")
-    file = os.path.basename(item['file'])
+    file = os.path.basename(item.file)
     gui_text(f"text:{file};justify: left;", "col-width:15em;")
-    gui_text(f"text:{item['mod']};justify: left;")
+    gui_text(f"text:{item.mod};justify: left;")
 
 
 def icon_item_template(item):
@@ -47,9 +108,9 @@ def icon_item_template(item):
 
 def grid_editor_menu_template(item):
     gui_row("row-height: 48px;padding:3px")
-    gui_icon(f"icon_index: {item['icon']};color:white;")
+    gui_icon(f"icon_index: {item.icon};color:white;")
     gui_row("row-height: 1.2em")
-    gui_text(f"text:{item['text']};justify:left;")
+    gui_text(f"text:{item.text};justify:left;")
     
 
 
@@ -66,6 +127,11 @@ def get_mod_dirs_with_file(file_name):
             tfn = os.path.join(dir, file, "grid_theme.json")
             missions.append({"mod": file, "file": fn, "theme": tfn})
     return missions
+
+def dict_to_object(dict_or_list):
+    if isinstance(dict_or_list, list):
+        return [MastDataObject(i) for i in dict_or_list]
+    return MastDataObject(dict_or_list)
 
 def get_mod_dirs_with_grid_data():
     return get_mod_dirs_with_file("extra_grid_data.json")

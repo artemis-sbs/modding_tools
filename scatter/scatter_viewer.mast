@@ -35,9 +35,6 @@ rand = False
 top_only = False
 ring_only = False
 
-gui_reroute_server( server_start)
-gui_reroute_clients(client_start)
-
 
 
 ==== scatter_editor_show ==== 

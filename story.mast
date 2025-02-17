@@ -1,8 +1,12 @@
-
-
+# print("Starting")
+# gui_reroute_server("start_server")
+# gui_reroute_clients("start_server")
 
 ==== server_start
     gui_section("area:2,20,80,35;")
+
+
+    print("RUNNING")
 
     sbs.suppress_client_connect_dialog(0)
 

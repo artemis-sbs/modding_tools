@@ -1,8 +1,8 @@
 import grid_editor.py
 
 #route_point_grid("add_grid_object")
-#route_select_grid("grid_comms")
-#route_focus_grid("watch_sel")
+route_select_grid("grid_comms")
+route_focus_grid("watch_sel")
 
 shared started = False
 shared grid_data = None
@@ -22,8 +22,6 @@ shared selection_go = None
 shared pos_x = None
 shared pos_y = None
 
-gui_reroute_server(server_start)
-gui_reroute_clients(server_start)
 
 =========== grid_editor_show
     #
@@ -32,7 +30,7 @@ gui_reroute_clients(server_start)
     #
     sim_create()
     shared artemis =  to_id(player_spawn(0,0,0, "Artemis", "tsn", "tsn_light_cruiser"))
-    assign_client_to_ship(0,artemis)
+    assign_client_to_ship(client_id,artemis)
     icons = [*range(147)]
 
 
@@ -69,6 +67,8 @@ gui_reroute_clients(server_start)
             else:
                 menu_items = [{"icon": 94, "text": "load"}, {"icon": 140, "text": "ship"},{"icon": 82, "text": "theme"}, {"icon": 26, "text": "edit"}]
 
+            menu_items = dict_to_object(menu_items)
+
             lb_menu = gui_list_box(menu_items,"row-height: 20px", item_template=grid_editor_menu_template, select=True)
             lb_menu.set_selected_index(menu, False)
             #lb_menu.selected = {menu}
@@ -97,6 +97,8 @@ gui_reroute_clients(server_start)
         theme = m.get("them")
         all.append({"mod":mod, "file":file, "theme": theme})
 
+    all = dict_to_object(all)
+
 
 
     ts = "row-height: 1.5em;background:#1578;"
@@ -111,9 +113,9 @@ gui_reroute_clients(server_start)
             on gui_message(bb):
                 grid_data_file_ = gd_picker.get_value()
                 if grid_data_file_ is not None:
-                    grid_data_mod_name = grid_data_file_.get("mod")
-                    grid_data_file_name = grid_data_file_.get("file")
-                    grid_theme_file_name = grid_data_file_.get("theme")
+                    grid_data_mod_name = grid_data_file_.mod
+                    grid_data_file_name = grid_data_file_.file
+                    grid_theme_file_name = grid_data_file_.theme
                     await task_schedule(load_data)
                     jump grid_editor_client_start
 
@@ -128,12 +130,13 @@ gui_reroute_clients(server_start)
 
     on change ship_select.value:
         ship_type = ship_select.value
-        jump grid_editor_client_start
+        #jump grid_editor_client_start
 
     jump finish_layout
 
 
 ========== theme_tools ============
+    t = get_ship_data_listbox_data()
 
     with content:
         with gui_sub_section() as a:
@@ -144,6 +147,11 @@ gui_reroute_clients(server_start)
                 if _roles is not None:
                     main = _roles.split(",")
                     main = main[0]
+
+            title = "text:Ships;justify:center;"
+            ts = "row-height: 1.5em;background:#1578;"
+            ship_picker = gui_list_box(t,"row-height: 0.4em; background:#1572;margin:0, 1em;", item_template=ship_item_template, title_template=title, title_section_style= ts, select=True, collapsible=True)
+
 
             title = "text:Role;justify:center;"
             ts = "row-height: 1.5em;background:#1578;"
@@ -164,15 +172,10 @@ gui_reroute_clients(server_start)
         # For now create a new ship
         #
         shared selection_go=None
-        print("CLEAR")
         shared pos_x = None
         shared pos_y = None
     
-        task_schedule(rebuild_grid_items)
-
-
-        last_ship_type = ship_type
-
+        await task_schedule(rebuild_grid_items)
 
     gui_activate_console("engineer")
 
@@ -180,52 +183,14 @@ gui_reroute_clients(server_start)
     with content:
 
         with gui_sub_section() as a:
-            # gui_section(style="area: 10, 0, 30, 45;row-height:3em;")
-            gui_row( style="row-height: 3em;padding:0,10px,0,0;")
-            """justify: center;text: Grid Item Properties""" 
-            gui_row( style="row-height: 60px;padding:0,10px,0,0;")
-            name_input = gui_input("desc: Name;" , var="item_name")
-
-            gui_row( style="row-height: 25;padding:4px,0,4px,0;")
-            #
-            # Split into primary and secondary roles
-            #
-            p_rls = set()
-            rls = set()
-            
-            for key in templates:
-                _roles = templates[key].get("roles")
-                continue if _roles is  None
-
-                all_rls = _roles.lower().split(",")
-                if len(all_rls) >1:
-                    rls.update(set(all_rls[1:]))
-
-                if len(all_rls) >0:
-                    p_rls.add(all_rls[0])
-                
-
-            rls=list(rls)
-            p_rls=list(p_rls)
-
-            title = "text:Primary;justify:center;"
-            ts = "row-height: 1.5em;background:#1578;"
-            primary_picker = gui_list_box(p_rls,"row-height: 1em; background:#1572;margin:0em, 1em;", item_template=roles_item_template, title_template=title, title_section_style= ts, select=True)
-
-
-            title = "text:Roles;justify:center;"
-            ts = "row-height: 1.5em;background:#1578;"
-            role_picker = gui_list_box(rls,"row-height: 1em; background:#1572;margin:1em, 1em;", item_template=roles_item_template, title_template=title, title_section_style= ts, multi=True)
-
             gui_row()    
-            #t = list(templates.values())
             t = []
             for key in sorted(templates.keys(), key=lambda x: x.lower()):
                 t.append(templates[key])
 
             title = "text:Template;justify:center;"
             ts = "row-height: 1.5em;background:#1578;"
-            template_picker = gui_list_box(t,"row-height: 4em; background:#1572;margin:0, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
+            template_picker = gui_list_box(t,"row-height: 0.4em; background:#1572;margin:0, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
             
             sel_grid_items = []
             for item in internal_items:
@@ -236,7 +201,7 @@ gui_reroute_clients(server_start)
 
             title = "text:Grid Items;justify:center;"
             ts = "row-height: 1.5em;background:#1578;"
-            grid_picker = gui_list_box(sel_grid_items,"row-height: 4em; background:#1572;margin:1em, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
+            grid_picker = gui_list_box(sel_grid_items,"row-height: 0.4em; background:#1572;margin:1em, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
 
 
             
@@ -245,7 +210,7 @@ gui_reroute_clients(server_start)
         item = template_picker.value
         item_name = item['name']
         item_roles = item['roles']
-        gui_represent(name_input)
+        # gui_represent(name_input)
 
 ========== show_hull_grid  ============
 
@@ -262,10 +227,13 @@ gui_reroute_clients(server_start)
     jump grid_editor_client_start
 
 
-===== add_grid_object ========
 
+
+
+//point/grid 
     shared pos_x = EVENT.source_point.x 
     shared pos_y = EVENT.source_point.y
+    
 
     sel_grid_items = []
     for item in internal_items:
@@ -276,15 +244,9 @@ gui_reroute_clients(server_start)
 
     grid_picker.items = sel_grid_items
     gui_represent(grid_picker)
-
-
-    ->END
-
-
     #
     # Check if this is a selection not an add
     #
-
     for g_id in items:
         item = items.get(g_id)
         ->END if item is None
@@ -297,11 +259,11 @@ gui_reroute_clients(server_start)
             COMMS_SELECTED_ID = g_id
             jump update_selection
 
-==== add_grid_object_common ===
+--- add_grid_object_common 
 
-    #print (f"{item_name} {item_roles} '{item_color.value}' '{item_icon.value}'")
+
+    #print (f"{item_name} {item_roles} '{item_color}' '{item_icon}'")
     #print(f"{pos_x} {pos_y}")
-
     #
     # Add needs to have the values: e.g. name, roles
     #
@@ -311,35 +273,41 @@ gui_reroute_clients(server_start)
 
 
     #print("Update1")
-    icon = int(item_icon.value[0])
-    color = item_color.value[0]
+    theme_item = {"name": item_name, "roles": item_roles}
+    theme_data = get_theme_data(theme_item, current_grid_theme)
+    #
+    #
+    icon = theme_data.get("icon", 0)
+    scale = theme_data.get("scale", 1.0)
+    color = theme_data.get("color", 0)
+
     g = ~~ {
         "x": pos_x, 
         "y":pos_y, 
-        "icon": icon, 
         "name":item_name, 
-        "color": color, 
-        "scale": item_scale,
         "roles": item_roles
     }~~
     i = len(internal_items)
-    go =  grid_spawn(artemis,  g["name"], f"gol:{i}", g["x"], g["y"], g["icon"], g["color"], g["roles"])
+    go =  grid_spawn(artemis,  g["name"], f"gol:{i}", g["x"], g["y"], icon, color, g["roles"])
+    #->END if go is None
 
-    go.blob.set("icon_scale", item_scale, 0)
+    go.blob.set("icon_scale", scale, 0)
     blob = to_blob(artemis)
     # blob.set("grid_selected_UID", go.id, 0)
     gid = go.id
     follow_route_select_grid(artemis, gid)
 
     items[go.id] = {"index": i, "go": go, "item": g}
-    ~~templates[g['name']] = g~~
+
+    ##### Templates aren't created
+    ##### ~~templates[g['name']] = g~~
     internal_items.append(g) 
-    await task_schedule(save_data)
+    # await task_schedule(save_data)
     COMMS_SELECTED_ID = to_id(go)
     await task_schedule(update_selection)
 
     gui_refresh("grid_editor_client_start")
-
+    
 
     ->END
 
@@ -356,12 +324,13 @@ gui_reroute_clients(server_start)
         grid_data[ship_type] = {"grid_objects":[]}
 
 
-    first = list(grid_data.keys())[0]
-    shared internal_items = grid_data[first]["grid_objects"]
+    # first = list(grid_data.keys())[0]
+    shared internal_items = grid_data[ship_type]["grid_objects"]
     shared current_grid_theme =  grid_theme_data[0]
+
     
-    
-    
+    last_ship_type = ship_type
+
 
 
     # add back the grid items as they are now
@@ -379,6 +348,7 @@ gui_reroute_clients(server_start)
         items[go.id] = {"index": i, "go": go, "item": g}
         i+=1
 
+    print(f"CLEAR {ship_type} {i}")
     yield success
 
 
@@ -514,16 +484,17 @@ gui_reroute_clients(server_start)
     #
     item_name = item["name"]
     item_roles = item["roles"]
-    item_scale = item["scale"]
+
+    #item_scale = item["scale"]
     # Set the selection of the icons
-    item_icon.content.selected = set()
-    item_icon.content.selected.add(item["icon"])
+    #item_icon.content.selected = set()
+    #item_icon.content.selected.add(item["icon"])
 
     # set selection for color
     #color = colors.index(item["color"])
     color = "white"
-    item_color.content.selected = set()
-    item_color.content.selected.add(color)
+    #item_color.content.selected = set()
+    #item_color.content.selected.add(color)
 
     gui_reroute_server(grid_editor_client_start)
 
