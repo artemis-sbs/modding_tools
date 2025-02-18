@@ -1,2 +1,8 @@
 import grid_editor.py
+import pane_load.mast
+import pane_save.mast
+import pane_editor.mast
+import pane_pick_ship.mast
+import pane_theme.mast
+import pane_template.mast
 import grid_editor.mast

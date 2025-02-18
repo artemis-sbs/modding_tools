@@ -1,0 +1,56 @@
+#
+# This may be obsolete, and currently isn't imported
+#
+
+##====== grid_comms =====
+
+//enable/grid/comms 
+//comms
+
+    #print("Changing select")
+
+
+    await comms():
+        + "update":
+            item = items[COMMS_SELECTED_ID]["item"]
+            index = items[COMMS_SELECTED_ID]["index"]
+            go = to_object(COMMS_SELECTED_ID)
+            #
+            # Take the current values and make that this item
+            #
+            if item_name is not None and item_name != "" and  item_roles is not None and item_roles != "":
+                icon = int(item_icon.value[0])
+                color = item_color.value[0]
+                blob = to_blob(COMMS_SELECTED_ID)
+                blob.set("icon_index", icon, 0)
+                blob.set("icon_scale", item_scale, 0)
+                blob.set("icon_color", color , 0)
+
+                ~~item["name"] = item_name~~
+                ~~item["icon"] = icon~~
+                ~~item["roles"] = item_roles~~
+                ~~item["color"] = color~~
+                ~~item["scale"] = item_scale~~
+
+                #
+                # Set the tag to the first role
+                #
+                roles = item_roles.split(",")
+                got = roles[0].strip()
+                go.set_go_type(got)
+                go.set_name(item_name)
+        + "delete": 
+            # delete the item
+            sbs.delete_grid_object(artemis, COMMS_SELECTED_ID)
+            go = items.pop(COMMS_SELECTED_ID, None)
+            
+            if go is not None:
+                # print (f"{go}")
+                internal_items.remove(go["item"])
+
+        ->END
+
+    await task_schedule(save_data)
+
+    jump grid_comms
+

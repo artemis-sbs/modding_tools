@@ -1,0 +1,50 @@
+
+========== pick_ship_tools ============
+
+    with content:
+        ship_info = gui_sub_section()
+
+        with  ship_info:
+            show_ship = gui_ship(ship_type)
+            data = ship_data_get_ship_data_for(ship_type)
+            if data is None:
+                _text = "None"
+            else:
+                name = data.get("name", "")
+                blah = data.get("long_desc", "No description")
+                #_text = """$t Test {_name}\n\n{_desc}."""
+                _text = """$t {name}:\n\n{blah}"""
+
+
+            gui_row()
+            with gui_sub_section():
+                ship_info_text = gui_text_area(_text)
+
+        gui_sub_section("col-width:400px")
+        t = get_ship_data_listbox_data()
+        title = "text:Ships;justify:center;"
+        ts = "row-height: 1.5em;background:#1578;"
+        ship_picker = gui_list_box(t,"row-height: 0.4em; background:#1572;margin:0, 1em;", item_template=ship_item_template, title_template=title, title_section_style= ts, select=True, collapsible=True)
+        
+
+        # ship_picker = ship_picker_control("Select Ship", ship_type)
+        # ship_select = gui_content(ship_picker)
+
+    on change ship_picker.value:
+        ship_type = ship_picker.value.key
+        show_ship.ship = ship_type
+        data = ship_data_get_ship_data_for(ship_type)
+        if data is None:
+            _text = "None"
+        else:
+            name = data.get("name", "")
+            blah = data.get("long_desc", "No description")
+            #_text = """$t Test {_name}\n\n{_desc}."""
+            _text = """$t {name}:\n\n{blah}"""
+            ship_info_text.value = _text
+
+        gui_represent(ship_info)
+        #jump grid_editor_client_start
+
+    jump finish_layout
+

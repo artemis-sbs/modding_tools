@@ -1,0 +1,22 @@
+
+
+========== theme_tools ============
+
+    with content:
+        with gui_sub_section() as a:
+
+            rls = []
+            for key in templates:
+                _roles = templates[key].get("roles")
+                if _roles is not None:
+                    main = _roles.split(",")
+                    main = main[0]
+
+            title = "text:Role;justify:center;"
+            ts = "row-height: 1.5em;background:#1578;"
+            role_picker = gui_list_box(rls,"row-height: 1em; background:#1572;", item_template=roles_item_template, title_template=title, title_section_style= ts, select=True)
+
+            
+
+    jump finish_layout
+

@@ -1,0 +1,20 @@
+
+========== save_tools ============
+    with content:
+        gui_row()
+        gui_blank()
+        gui_row("row-height: 50px")
+        gui_blank(5)
+        save = gui_button("Yes Save")
+        gui_blank(5)
+        gui_row()
+        gui_blank()
+        on gui_message(save):
+            await task_schedule(save_data)
+            
+    jump finish_layout
+
+
+===== save_data =====
+    save_json_data(grid_data_file_name, grid_data)
+    yield success
