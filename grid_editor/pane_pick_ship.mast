@@ -11,9 +11,10 @@
                 _text = "None"
             else:
                 name = data.get("name", "")
+                side = data.get("side", "")
                 blah = data.get("long_desc", "No description")
                 #_text = """$t Test {_name}\n\n{_desc}."""
-                _text = """$t {name}:\n\n{blah}"""
+                _text = """$t {side} {name}:\n\n{blah}"""
 
 
             gui_row()
@@ -38,9 +39,10 @@
             _text = "None"
         else:
             name = data.get("name", "")
+            side = data.get("side", "")
             blah = data.get("long_desc", "No description")
             #_text = """$t Test {_name}\n\n{_desc}."""
-            _text = """$t {name}:\n\n{blah}"""
+            _text = """$t {side} {name}:\n\n{blah}"""
             ship_info_text.value = _text
 
         gui_represent(ship_info)
