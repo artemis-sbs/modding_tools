@@ -63,9 +63,9 @@ shared pos_y = None
     gui_row()
     with gui_sub_section("col-width:4em;"):
         if grid_data is None:
-            menu_items = [{"icon": 94, "text": "load"}] 
+            menu_items = [{"icon": 95, "text": "load"}] 
         else:
-            menu_items = [{"icon": 94, "text": "load"}, {"icon": 95, "text": "save"}, {"icon": 26, "text": "edit"}, {"icon": 140, "text": "ship"},{"icon": 82, "text": "theme"}, {"icon": 26, "text": "template"}]
+            menu_items = [{"icon": 95, "text": "load"}, {"icon": 94, "text": "save"}, {"icon": 26, "text": "edit"}, {"icon": 140, "text": "ship"},{"icon": 82, "text": "theme"}, {"icon": 26, "text": "template"}]
 
         menu_items = dict_to_object(menu_items)
 
