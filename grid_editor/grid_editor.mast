@@ -56,22 +56,25 @@ shared pos_y = None
     gui_section("area:0,0,100,100;")
 
     # Title bar
-    gui_row("row-height:2em;background: #1573")
-    gui_text("text:GRID EDITOR; justify: center;")
-
+    gui_row("row-height:2em;")
+    with gui_sub_section("row-height:2em;") as header:
+        gui_row("row-height:2em;background: #1573")
+        gui_text("text:GRID EDITOR; justify: center;")
     gui_row()
-    with gui_sub_section() as content:
-        with gui_sub_section("col-width:4em;"):
-            if grid_data is None:
-                menu_items = [{"icon": 94, "text": "load"}] 
-            else:
-                menu_items = [{"icon": 94, "text": "load"}, {"icon": 140, "text": "ship"},{"icon": 82, "text": "theme"}, {"icon": 26, "text": "edit"}]
+    with gui_sub_section("col-width:4em;"):
+        if grid_data is None:
+            menu_items = [{"icon": 94, "text": "load"}] 
+        else:
+            menu_items = [{"icon": 94, "text": "load"}, {"icon": 140, "text": "ship"},{"icon": 82, "text": "theme"}, {"icon": 26, "text": "edit"}]
 
-            menu_items = dict_to_object(menu_items)
+        menu_items = dict_to_object(menu_items)
 
-            lb_menu = gui_list_box(menu_items,"row-height: 20px", item_template=grid_editor_menu_template, select=True)
-            lb_menu.set_selected_index(menu, False)
-            #lb_menu.selected = {menu}
+        lb_menu = gui_list_box(menu_items,"row-height: 20px", item_template=grid_editor_menu_template, select=True)
+        lb_menu.set_selected_index(menu, False)
+        #lb_menu.selected = {menu}
+
+        # Section for contant
+    content = gui_sub_section()
         
     on change lb_menu.value:
         menu = lb_menu.get_selected_index()
@@ -125,18 +128,34 @@ shared pos_y = None
 ========== pick_ship_tools ============
 
     with content:
-        ship_picker = ship_picker_control("Select Ship", ship_type)
-        ship_select = gui_content(ship_picker)
+        ship_info = gui_sub_section()
 
-    on change ship_select.value:
-        ship_type = ship_select.value
+        with  ship_info:
+            show_ship = gui_ship(ship_type)
+            gui_row()
+            with gui_sub_section():
+                gui_text("this is where the ship inof will be")
+
+        gui_sub_section("col-width:400px")
+        t = get_ship_data_listbox_data()
+        title = "text:Ships;justify:center;"
+        ts = "row-height: 1.5em;background:#1578;"
+        ship_picker = gui_list_box(t,"row-height: 0.4em; background:#1572;margin:0, 1em;", item_template=ship_item_template, title_template=title, title_section_style= ts, select=True, collapsible=True)
+        
+
+        # ship_picker = ship_picker_control("Select Ship", ship_type)
+        # ship_select = gui_content(ship_picker)
+
+    on change ship_picker.value:
+        ship_type = ship_picker.value.key
+        show_ship.ship = ship_type
+        gui_represent(ship_info)
         #jump grid_editor_client_start
 
     jump finish_layout
 
 
 ========== theme_tools ============
-    t = get_ship_data_listbox_data()
 
     with content:
         with gui_sub_section() as a:
@@ -147,11 +166,6 @@ shared pos_y = None
                 if _roles is not None:
                     main = _roles.split(",")
                     main = main[0]
-
-            title = "text:Ships;justify:center;"
-            ts = "row-height: 1.5em;background:#1578;"
-            ship_picker = gui_list_box(t,"row-height: 0.4em; background:#1572;margin:0, 1em;", item_template=ship_item_template, title_template=title, title_section_style= ts, select=True, collapsible=True)
-
 
             title = "text:Role;justify:center;"
             ts = "row-height: 1.5em;background:#1578;"
@@ -186,31 +200,59 @@ shared pos_y = None
             gui_row()    
             t = []
             for key in sorted(templates.keys(), key=lambda x: x.lower()):
-                t.append(templates[key])
+                t.append(MastDataObject(templates[key]))
 
             title = "text:Template;justify:center;"
             ts = "row-height: 1.5em;background:#1578;"
             template_picker = gui_list_box(t,"row-height: 0.4em; background:#1572;margin:0, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
             
+            
+
+        with gui_sub_section() as a:
             sel_grid_items = []
-            for item in internal_items:
+            l = len(items)
+            for go_id in items:
+                go = items[go_id]
+                item = go.get("item")
+                if item is None:
+                    continue
+
                 x = item["x"]
                 y = item["y"]
                 if x == pos_x and y == pos_y:
-                    sel_grid_items.append(item)
+                    add_item = item | {"id": go_id}
+                    sel_grid_items.append(MastDataObject(add_item))
 
             title = "text:Grid Items;justify:center;"
             ts = "row-height: 1.5em;background:#1578;"
-            grid_picker = gui_list_box(sel_grid_items,"row-height: 0.4em; background:#1572;margin:1em, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, select=True)
-
+            
+            grid_picker = gui_list_box(sel_grid_items,"row-height: 0.4em; background:#1572;margin:1em, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, multi=True)
+            gui_row("row-height: 45px")
+            delete_selection = gui_button("Delete")
+            gui_row("row-height: 45px")
+            clear_selection = gui_button("Deselection")
 
             
 
     on change template_picker.value:
         item = template_picker.value
-        item_name = item['name']
-        item_roles = item['roles']
-        # gui_represent(name_input)
+        item_name = item.name
+        item_roles = item.roles
+        # gui_represent(name_input)1
+
+    on gui_message(clear_selection):
+        if selection_go is not None:
+            sbs.delete_grid_object(artemis, to_id(selection_go))
+            selection_go = None
+            set_grid_selection(artemis, 0)
+            grid_picker.items = []
+            gui_represent(grid_picker)
+
+    on gui_message(delete_selection):
+        sel = grid_picker.get_selected()
+        for go in sel:
+            sbs.delete_grid_object(artemis, go.id)
+        gui_refresh("grid_editor_client_start")
 
 ========== show_hull_grid  ============
 
@@ -235,15 +277,15 @@ shared pos_y = None
     shared pos_y = EVENT.source_point.y
     
 
-    sel_grid_items = []
-    for item in internal_items:
-        x = item["x"]
-        y = item["y"]
-        if x == pos_x and y == pos_y:
-            sel_grid_items.append(item)
-
-    grid_picker.items = sel_grid_items
-    gui_represent(grid_picker)
+    # sel_grid_items = []
+    # for item in internal_items:
+    #     x = item["x"]
+    #     y = item["y"]
+    #     if x == pos_x and y == pos_y:
+    #         sel_grid_items.append(MastDataObject(item))
+    
+    # grid_picker.items = sel_grid_items
+    # gui_represent(grid_picker)
     #
     # Check if this is a selection not an add
     #
@@ -348,7 +390,6 @@ shared pos_y = None
         items[go.id] = {"index": i, "go": go, "item": g}
         i+=1
 
-    print(f"CLEAR {ship_type} {i}")
     yield success
 
 
@@ -399,7 +440,7 @@ shared pos_y = None
 
 
     await comms():
-    + "update":
+        + "update":
             item = items[COMMS_SELECTED_ID]["item"]
             index = items[COMMS_SELECTED_ID]["index"]
             go = to_object(COMMS_SELECTED_ID)
@@ -427,7 +468,7 @@ shared pos_y = None
                 got = roles[0].strip()
                 go.set_go_type(got)
                 go.set_name(item_name)
-    + "delete": 
+        + "delete": 
             # delete the item
             sbs.delete_grid_object(artemis, COMMS_SELECTED_ID)
             go = items.pop(COMMS_SELECTED_ID, None)

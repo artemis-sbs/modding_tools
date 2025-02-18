@@ -11,15 +11,15 @@ import os
 def history_item_template(item):
     gui_row("row-height: 3.5 em;padding:3px;")
     theme = get_theme_data(item)
-    color = theme['color']
-    icon = theme['icon']
+    color = theme["color"]
+    icon = theme["icon"]
     
     gui_icon(f"color:{color};icon_index:{icon};", "padding:0,0.2em;row-height: 3.5 em;col-width: 3.5 em;")
     with gui_sub_section("padding: 0.5em, 0.5em;") as fred:
         gui_row("row-height: 1.5em;")
-        gui_text(f"text: {item['name']};justify: left;font:gui-3;color:{color};")
+        gui_text(f"text: {item.name};justify: left;font:gui-3;color:{color};")
         gui_row("row-height: 1em;")
-        roles = item['roles'].replace(",", " ")
+        roles = item.roles.replace(",", " ")
         gui_text(f"text:{roles};justify: left;font:gui-2;color:{color};")
 
 
@@ -32,7 +32,7 @@ def get_ship_data_listbox_data():
         side = s.get("side")
         key  = s.get("key")
         name  = s.get("name")
-        roles  = s.get("roles")
+        roles  = s.get("roles","").lower()
 
         if roles is None:
             continue
@@ -158,7 +158,7 @@ def get_theme_data(item, grid_theme_data=None):
     color = None
     icon = None
     for role in reversed(roles):
-        role = role.strip()
+        role = role.strip().lower()
         if color is None:
             color = colors.get(role)
         if icon is None:
