@@ -64,6 +64,10 @@ shared icons = [*range(147)]
             ts = "row-height: 1.5em;background:#1578;"
             
             grid_picker = gui_list_box(sel_grid_items,"row-height: 0.4em; background:#1572;margin:1em, 1em;", item_template=history_item_template, title_template=title, title_section_style= ts, multi=True)
+            if len(grid_picker.get_selected())==0:
+                if len(sel_grid_items)>0:
+                    grid_picker.set_selected_index(0)
+
             gui_row("row-height: 45px")
             delete_selection = gui_button("Delete")
             gui_row("row-height: 45px")
@@ -97,11 +101,21 @@ shared icons = [*range(147)]
             # remove from items
             items.pop(go.id, None)
         
-        gui_refresh("grid_editor_client_start")
+        gui_reroute_server(grid_editor_client_start)
 
 ========== show_hull_grid  ============
+    data = ship_data_get_ship_data_for(ship_type)
+    _text = "None"
+    if data is not None:
+        name = data.get("name", "")
+        side = data.get("side", "")
+        #_text = """$t Test {_name}\n\n{_desc}."""
+        _text = """{side} {name}"""
 
     with gui_sub_section() as internal:
+        gui_row("row-height:40px;")
+        gui_text(_text, "justify:center;font:gui-5;")
+        gui_row()
         gui_layout_widget("ship_internal_view")
 
     jump finish_layout
