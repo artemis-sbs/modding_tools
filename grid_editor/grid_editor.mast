@@ -44,7 +44,15 @@ PANE_TEMPLATE = 5
     gui_row("row-height:2em;")
     with gui_sub_section("row-height:2em;") as header:
         gui_row("row-height:2em;background: #1573")
-        gui_text("text:GRID EDITOR; justify: center;")
+        gui_text("text:GRID EDITOR; font:gui-3;justify: center;")
+        ib = gui_icon("icon_index:137;color:white;", style="click_color:white;click_tag:menu;click_background:#6666")
+        #ib = gui_text("$text:blah;color:white;", style="click_color:white;click_tag:menu;")
+
+    on gui_click(ib):
+        jump server_start
+
+
+
     gui_row()
     with gui_sub_section("col-width:4em;"):
         if grid_data is None:

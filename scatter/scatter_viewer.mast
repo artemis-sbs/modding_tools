@@ -7,7 +7,7 @@ y_slider_row = gui_style_def("row-height: 1.5em;margin: 6px,0,2px, 6px;backgroun
 z_slider_row = gui_style_def("row-height: 1.5em;margin: 6px,0,2px, 6px;background:blue;")
 input_row = gui_style_def("row-height: 2em;padding: 6px,0,2px, 6px;")
 separator = gui_style_def("row-height: 20px;")
-form_style = gui_style_def("area: 100-20em, 50px, 100, 100-2em;margin:5px,5px,5px,5px;padding:3px,13px,3px,3px;border-color: #fff3")
+form_style = gui_style_def("area: 100-20em, 5em, 100, 100-2em;margin:5px,5px,5px,5px;padding:3px,13px,3px,3px;border-color: #fff3")
 
 
 counts = [10,20]
@@ -40,6 +40,7 @@ ring_only = False
 ==== scatter_editor_show ==== 
     sim_create()
 
+    
     # Create a Invisible ship
     # and that's it for the server
     # Create an chase camera
@@ -61,13 +62,21 @@ ring_only = False
 
 
 ============ scatter_client_common ==================
+    
+    gui_section("area:0,0,100,100;")
+    gui_row("row-height:2em;background: #1573")
+    gui_text("text:SCATTER VIEWER; font:gui-3;justify: center;")
+    ib = gui_icon("icon_index:137;color:white;", style="click_color:white;click_tag:menu;click_background:#6666")
+    on gui_click(ib):
+        jump server_start
+
 
     assign_client_to_ship(client_id,camera)
 
 
     gui_activate_console("scatter")
 
-    gui_section(style="area: 0, 0, 100-20em, 100;")
+    gui_section(style="area: 0, 2em, 100-20em, 100;")
     gui_layout_widget("3dview")
 
     dl = gui_slider("low: 0; high:300.0;", style="col-width:20px;", var="dolly")
@@ -77,7 +86,7 @@ ring_only = False
     gui_row()
     gui_layout_widget("2dview")
 
-    gui_section(style="area: 100-20em, 0, 100, 45px;")
+    gui_section(style="area: 100-20em, 2em, 100, 5em;")
     todo = gui_drop_down("text: {menu}; list: arc, line, rect_fill, box_fill, box, ring, ring_density, sphere", var="menu")
     gui_drop_down("text: {what}; list: asteroid, nebula, station, ship", var="what")
 

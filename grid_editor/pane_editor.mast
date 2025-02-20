@@ -74,12 +74,12 @@ shared icons = [*range(147)]
                 gui_row("row-height: 1.1em")
                 gui_text("Name")
                 gui_row("row-height: 2em")
-                _input = gui_input("desc:Name;", var="item_name")
+                name_input = gui_input("desc:Name;", var="item_name")
 
                 gui_row("row-height: 1.1em")
                 gui_text("Roles")
                 gui_row("row-height: 2em")
-                _input = gui_input("desc:Roles;", var="item_roles")
+                roles_input = gui_input("desc:Roles;", var="item_roles")
                 gui_row("row-height: 0.5em")
                 gui_blank()
                 gui_row("row-height: 2em")
@@ -163,7 +163,11 @@ shared icons = [*range(147)]
         item = template_picker.value
         item_name = item.name
         item_roles = item.roles
-        # gui_represent(name_input)1
+        name_input.value =item_name
+        roles_input.value =item_roles
+        gui_represent(name_input)
+        gui_represent(roles_input)
+        
 
 
 ========== show_hull_grid  ============

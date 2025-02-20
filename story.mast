@@ -4,10 +4,6 @@
 
 ==== server_start
     gui_section("area:2,20,80,35;")
-
-
-    print("RUNNING")
-
     sbs.suppress_client_connect_dialog(0)
 
 
@@ -17,7 +13,7 @@
         jump grid_editor_show
 
     gui_row()
-    on gui_message(gui_button("Scatter editor")):
+    on gui_message(gui_button("Scatter viewer")):
         jump scatter_editor_show
 
     gui_row()

@@ -64,9 +64,19 @@ face_text = ""
 
 
 ===== avatar_editor_show
-    gui_section(style="area: 10, 3, 100, 20;")
+# Title bar
+    
+    gui_section("area:0,0,100,100;")
+    gui_row("row-height:2em;background: #1573")
+    gui_text("text:AVATAR EDITOR; font:gui-3;justify: center;")
+    ib = gui_icon("icon_index:137;color:white;", style="click_color:white;click_tag:menu;click_background:#6666")
+    on gui_click(ib):
+        jump server_start
 
-    gui_text_area("$t Avatar Editor\n\nthe code is copied to the clipboard whenever changes are made.")
+
+    gui_section(style="area: 10, 13, 100, 20;")
+
+    gui_text("The face code is copied to the clipboard whenever changes are made.")
 
     gui_section(style="area: 0, 20,100-400px, 100;")
     the_face = gui_face(char_editor_build_face(race, avatar_enable, avatar_cur))

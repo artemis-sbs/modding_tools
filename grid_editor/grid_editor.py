@@ -53,8 +53,6 @@ def get_ship_data_listbox_data():
 
             ret.append( MastDataObject({"key": key, "name": name, "roles": roles}))
 
-
-    print(len(ret))
     return ret
     
 
