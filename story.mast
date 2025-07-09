@@ -30,10 +30,10 @@
     todo = gui_drop_down("text: Editor; list:grid,character;", var="menu")
     on gui_message(todo):
         match menu:
-        case "grid":
-            jump grid_editor_client_start
-        case "character":
-            jump character_editor_client_start
+            case "grid":
+                jump grid_editor_client_start
+            case "character":
+                jump character_editor_client_start
 
 
 
