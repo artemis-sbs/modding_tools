@@ -65,6 +65,7 @@ face_text = ""
 
 ===== avatar_editor_show
 # Title bar
+    copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
     
     gui_section("area:0,0,100,100;")
     gui_row("row-height:2em;background: #1573")
@@ -146,3 +147,4 @@ face_text = ""
     """ Data is messed up """
 
     await gui()
+

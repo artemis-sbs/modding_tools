@@ -6,7 +6,7 @@ import sys
 
 def copy_clipboard(msg):
     t = msg
-    gui_clipboard_copy(faces.Characters.URSULA)
+    gui_clipboard_copy(msg)
     return msg
 
 def char_editor_build_face(race, enables, values):
