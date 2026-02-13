@@ -4,8 +4,13 @@
 
 ==== server_start
     gui_section("area:2,20,80,35;")
+    
+    
     sbs.suppress_client_connect_dialog(0)
-
+    sbs.transparent_options_button(0,1)
+    sim_create()
+    sim_resume()
+    
 
     gui_section("area:25,30,85,95;row-height: 35px")
     
@@ -19,6 +24,10 @@
     gui_row()
     on gui_message(gui_button("Avatar editor")):
         jump avatar_editor_show
+
+    gui_row()
+    on gui_message(gui_button("Document Viewer")):
+        jump document_viewer
 
     await gui()
 
