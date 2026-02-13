@@ -55,20 +55,121 @@ def quest_title():
 
 
 
-def quest_create_test_data():
-    # signal_register("quest_activated", quest_activated)
-    doc = document_get_amd_file(fs.get_mission_dir_filename("consoles/quest.amd"))
+import ctypes
+import ctypes.wintypes as wintypes
 
-    client_id = FrameContext.client_id
-    if client_id == 0:
-        return
+LPOFNHOOKPROC = ctypes.c_voidp # TODO
+LPCTSTR = LPTSTR = ctypes.c_wchar_p
 
-    ship_id = FrameContext.context.sbs.get_ship_of_client(client_id)
-    if ship_id == 0:
-        return
+class OPENFILENAME(ctypes.Structure):
+    _fields_ = [("lStructSize", wintypes.DWORD),
+                ("hwndOwner", wintypes.HWND),
+                ("hInstance", wintypes.HINSTANCE),
+                ("lpstrFilter", LPCTSTR),
+                ("lpstrCustomFilter", LPTSTR),
+                ("nMaxCustFilter", wintypes.DWORD),
+                ("nFilterIndex", wintypes.DWORD),
+                ("lpstrFile", LPTSTR),
+                ("nMaxFile", wintypes.DWORD),
+                ("lpstrFileTitle", LPTSTR),
+                ("nMaxFileTitle", wintypes.DWORD),
+                ("lpstrInitialDir", LPCTSTR),
+                ("lpstrTitle", LPCTSTR),
+                ("flags", wintypes.DWORD),
+                ("nFileOffset", wintypes.WORD),
+                ("nFileExtension", wintypes.WORD),
+                ("lpstrDefExt", LPCTSTR),
+                ("lCustData", wintypes.LPARAM),
+                ("lpfnHook", LPOFNHOOKPROC),
+                ("lpTemplateName", LPCTSTR),
+                ("pvReserved", wintypes.LPVOID),
+                ("dwReserved", wintypes.DWORD),
+                ("flagsEx", wintypes.DWORD)]
+
+GetOpenFileName = ctypes.windll.comdlg32.GetOpenFileNameW
+GetSaveFileName = ctypes.windll.comdlg32.GetSaveFileNameW
+
+OFN_ENABLESIZING      =0x00800000
+OFN_PATHMUSTEXIST     =0x00000800
+OFN_OVERWRITEPROMPT   =0x00000002
+OFN_NOCHANGEDIR       =0x00000008
+MAX_PATH=1024
+
+
+def _buildOFN(title, default_extension, filter_string, fileBuffer):
+    ofn = OPENFILENAME()
+    ofn.lStructSize = ctypes.sizeof(OPENFILENAME)
+    ofn.lpstrTitle = title
+    ofn.lpstrFile = ctypes.cast(fileBuffer, LPTSTR)
+    ofn.nMaxFile = MAX_PATH
+    ofn.lpstrDefExt = default_extension
+    ofn.lpstrFilter = filter_string
+    ofn.Flags = OFN_ENABLESIZING | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR
+    return ofn
+
+
+def getOpenFileName(title, default_extension, filter_string, initialPath):
+
+    if initialPath is None:
+        initialPath = ""
+    filter_string = filter_string.replace("|", "\0")
+    fileBuffer = ctypes.create_unicode_buffer(initialPath, MAX_PATH)
+    ofn = _buildOFN(title, default_extension, filter_string, fileBuffer)
+
+    if GetOpenFileName(ctypes.byref(ofn)):
+        return fileBuffer.value
+        #return "".join(raw_contents_as_list)
+    else:
+        return None
+
+def getSaveFileName(title, default_extension, filter_string, initialPath):
+
+    if initialPath is None:
+        initialPath = ""
+    filter_string = filter_string.replace("|", "\0")
+    fileBuffer = ctypes.create_unicode_buffer(initialPath, MAX_PATH)
+    ofn = _buildOFN(title, default_extension, filter_string, fileBuffer)
     
-    set_inventory_value(Agent.SHARED_ID,"__quests__", doc)
-    set_inventory_value(client_id,"__quests__", doc)
-    set_inventory_value(ship_id, "__quests__",doc)
+    if GetSaveFileName(ctypes.byref(ofn)):
+        return fileBuffer.value
+        #return "".join(raw_contents_as_list)
+    else:
+        return None
+    
 
 
+def quest_file_open():
+    ret = getOpenFileName("Open", "*.amd", "amd|Artemis Markdown", None)
+    return ret
+
+
+
+import os
+import sys 
+import time
+
+class Watcher(object):
+    # Constructor
+    def __init__(self, watch_file):
+        self._cached_stamp = 0
+        self.filename = watch_file
+
+    def reset(self, watch_file):
+        self._cached_stamp = 0
+        self.filename = watch_file
+
+    # Look for changes
+    def look(self):
+        try:
+            stamp = os.stat(self.filename).st_mtime
+            if stamp != self._cached_stamp:
+                self._cached_stamp = stamp
+                # File has changed, so do something...
+                return True
+        except Exception:
+            print("EXP")
+        return False
+
+def quest_get_watcher(watch_file):
+    return Watcher(watch_file)  # also call custom action function
+    
