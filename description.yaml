@@ -1,0 +1,8 @@
+#Every mission should have this file included.  It describes the mission for the mission list screen of the server.
+format version: 1
+
+Category: Tools  # category for the mission; used for sorting and filtering the mission list
+Category Priority: G  # letter grade for the category; A grade categories appear at the top of the list
+Visible Mission Name: Modding tools  # name of the mission as it appears in the mission list
+Description: Tools for modding and mission scriptiong
+Keywords: tools, multiple
