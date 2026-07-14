@@ -132,7 +132,7 @@ ring_only = False
 
 ===== clear_objects ===== 
     for o in objects:
-        sbs.delete_object(o)
+        delete_object(o)
     objects=[]
     yield success
 
