@@ -1,72 +1,22 @@
 
 
-shared avatar_widgets = ~~{
-"arvonian": [
-    {"label": "Eyes", "min": 0, "max":4}, 
-    {"label": "Mouth", "min": 0, "max":4}, 
-    {"label": "Crown", "min": 0, "max":4, "optional": True}, 
-    {"label": "Jewels", "min": 0, "max":4, "optional": True}], 
-"kralien": [
-    {"label": "Eyes", "min": 0, "max":4}, 
-    {"label": "Mouth", "min": 0, "max":4}, 
-    {"label": "Scalp", "min": 0, "max":4, "optional": True}, 
-    {"label": "Extra", "min": 0, "max":4, "optional": True}
-    ], 
+# The per-race control table used to live here as a `shared avatar_widgets` dict. It is
+# gone: `faces.FACE_FEATURES` is generated from the layer tables, so the editor cannot
+# disagree with the art it is editing. The 2026-09 sheet redraw is what settled that -
+# this copy had gone stale in five separate places without anybody noticing, because a
+# wrong control does not fail, it just edits the wrong thing.
 
-"skaraan": [
-    {"label": "Eyes", "min": 0, "max":4}, 
-    {"label": "Mouth", "min": 0, "max":4}, 
-    {"label": "Horn", "min": 0, "max":4, "optional": True}, 
-    {"label": "Hat", "min": 0, "max":4, "optional": True}
-    ], 
-
-"torgoth": [
-    {"label": "Eyes", "min": 0, "max":4}, 
-    {"label": "Mouth", "min": 0, "max":4}, 
-    {"label": "Hair", "min": 0, "max":4, "optional": True}, 
-    {"label": "Extra", "min": 0, "max":3, "optional": True},
-    {"label": "Hat", "min": 0, "max":0, "optional": True}
-    ], 
-
-
-"ximni": [
-    {"label": "Eyes", "min": 0, "max":4}, 
-    {"label": "Mouth", "min": 0, "max":4}, 
-    {"label": "Horns", "min": 0, "max":4, "optional": True}, 
-    {"label": "Mask", "min": 0, "max":2, "optional": True},
-    {"label": "Tattoo", "min": 0, "max":1, "optional": True}
-    ], 
-
-"terran": [
-    {"label": "Body", "min": 0, "max":1}, 
-    {"label": "Eyes", "min": 0, "max":9}, 
-    {"label": "Mouth", "min": 0, "max":9}, 
-    {"label": "Hair", "min": 0, "max":4, "optional": True}, 
-    {"label": "Long Hair", "min": 0, "max": 7, "optional": True},
-    {"label": "Facial Hair", "min": 0, "max":4, "optional": True},
-    {"label": "Extra", "min": 0, "max":4, "optional": True},
-    {"label": "Uniform", "min": 0, "max":9, "optional": True},
-    {"label": "Skin Tone", "min": 0, "max": len(faces.skin_tones)-1},
-    {"label": "Hair Tone", "min": 0, "max":len(faces.hair_tones)-1}
-    ]
-
-}~~
-
-shared gui_state = 'arv'
 shared race = "terran"
-shared avatar_face = faces.Characters.URSULA
-shared avatar_enable = list(itertools.repeat(True,10))
-shared avatar_cur = list(itertools.repeat(0,10))
-sl1 = 1.0
-sl2 = 1.0
+shared avatar_cur = []
+shared avatar_enable = []
+avatar_cur, avatar_enable = char_editor_defaults(race)
 face_text = ""
-
 
 
 ===== avatar_editor_show
 # Title bar
     copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
-    
+
     gui_section("area:0,0,100,100;")
     gui_row("row-height:2em;background: #1573")
     gui_text("text:AVATAR EDITOR; font:gui-3;justify: center;")
@@ -87,59 +37,81 @@ face_text = ""
     race_pick = gui_drop_down("text:{race.capitalize()};list: Arvonian, Kralien, Skaraan, Terran, Torgoth, Ximni", var="race")
     on gui_message(race_pick):
         race = race.lower()
-        avatar_enable = list(itertools.repeat(True,10))
-        avatar_cur = list(itertools.repeat(0,10))
+        # Sized for the NEW race. The lists used to be a fixed ten entries whatever the
+        # race, so switching to one with fewer controls left another race's values in the
+        # tail and fed them straight back into the builder.
+        avatar_cur, avatar_enable = char_editor_defaults(race)
         jump avatar_editor_show
 
     gui_row()
 
-    
-    # gui_section(style="area: 5, 20, 35, 60+2em;row-height:2em;")
     gui_section(style="area: 100-400px, 30, 100, 100;row-height:2em;")
 
-    widgets = avatar_widgets.get(race)
+    widgets = char_editor_features(race)
 
-    jump config_error if widgets is None
+    jump config_error if not widgets
 
-    i = 0
     widget_style = "padding:10px,5px,5px,10px;"
-    for widget in widgets:
+    # `i` is the feature's own index now. It used to be bumped by hand before or after
+    # the body of the loop depending on the race, to skip the face_id argument the old
+    # per-race builders took - build_face has no such slot.
+    for i, widget in enumerate(widgets):
         gui_row( style="padding: 1px;")
-        if race != "terran":
-            i += 1
-
         label = widget["label"]
+        wmax = widget["max"]
+        wnames = widget.get("names")
         if "optional" in widget:
-            #enable = 1 if widget["optional"] == True else 0
             enable = avatar_enable[i]
             cb = gui_checkbox("text: {label};state:{enable}", widget_style, data={"windex": i})
             cb.value = enable
-            #
             on gui_message(cb):
                 avatar_enable[windex] = not avatar_enable[windex]
                 the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
-                gui_represent(the_face)
-                
 
-            if widget["max"]>0:
-                sl = gui_int_slider("low: {widget['min']}; high: {widget['max']};", widget_style, data={"windex": i})
-                on gui_message(sl):
-                    avatar_cur[windex] = __ITEM__.value 
+            # A feature with NAMES gets a dropdown when the list is SHORT, and a slider
+            # with its name written beside it when it is long - a dropdown stops being
+            # usable in the engine around ten entries and the skin palette is 39 tones.
+            if wnames and not char_editor_use_slider(wnames):
+                dd = gui_drop_down(char_editor_choice_style(wnames, avatar_cur[i]), widget_style, data={"windex": i, "wpick": wnames})
+                on gui_message(dd):
+                    avatar_cur[windex] = char_editor_choice_index(wpick, __ITEM__.value)
                     the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
-                    gui_represent(the_face)
+            elif wmax > 0:
+                sl = gui_int_slider("low: 0; high: {wmax};", widget_style, data={"windex": i})
+                sl.value = avatar_cur[i]
+                on gui_message(sl):
+                    avatar_cur[windex] = __ITEM__.value
+                    the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
         else:
-            """text:{label}"""
-            sl = gui_int_slider("low: {widget['min']}; high: {widget['max']}; show_number: no", widget_style, data={"windex": i})
-            on gui_message(sl):
-                avatar_cur[windex] = __ITEM__.value 
-                the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
-                gui_represent(the_face)
+            # The label widget carries "Feature: Name" so a long named list can be a
+            # slider and still say what it is on. It travels through `data` rather than
+            # being referenced directly: every row's handler is compiled in this same
+            # loop, so a bare `nm` would resolve to the LAST row's widget and every
+            # slider would rename the bottom one.
+            if wnames and char_editor_use_slider(wnames):
+                nm = gui_text(char_editor_choice_label(label, wnames, avatar_cur[i]))
+                sl = gui_int_slider("low: 0; high: {wmax}; show_number: no", widget_style, data={"windex": i, "wpick": wnames, "wlabel": nm, "wtitle": label})
+                sl.value = avatar_cur[i]
+                on gui_message(sl):
+                    avatar_cur[windex] = __ITEM__.value
+                    wlabel.value = char_editor_choice_label(wtitle, wpick, __ITEM__.value)
+                    the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
+            else:
+                """text:{label}"""
+                if wnames:
+                    dd = gui_drop_down(char_editor_choice_style(wnames, avatar_cur[i]), widget_style, data={"windex": i, "wpick": wnames})
+                    on gui_message(dd):
+                        avatar_cur[windex] = char_editor_choice_index(wpick, __ITEM__.value)
+                        the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
+                else:
+                    sl = gui_int_slider("low: 0; high: {wmax}; show_number: no", widget_style, data={"windex": i})
+                    sl.value = avatar_cur[i]
+                    on gui_message(sl):
+                        avatar_cur[windex] = __ITEM__.value
+                        the_face.value = copy_clipboard(char_editor_build_face(race, avatar_enable, avatar_cur))
 
-        if race == "terran":
-            i += 1
-    
 
-    await gui() 
+    await gui()
 
 
 ========= config_error =========
@@ -147,4 +119,3 @@ face_text = ""
     """ Data is messed up """
 
     await gui()
-
