@@ -83,7 +83,7 @@ shared icons = [*range(147)]
                 gui_row("row-height: 0.5em")
                 gui_blank()
                 gui_row("row-height: 2em")
-                update_selection = gui_button("Update", "padding: 5px,7px,5px,0;")
+                update_selection_button = gui_button("Update", "padding: 5px,7px,5px,0;")
 
             gui_row("row-height: 5em")
             with gui_sub_section() as b:
@@ -118,7 +118,7 @@ shared icons = [*range(147)]
             #gui_represent(grid_picker)
             gui_reroute_server(grid_editor_client_start)
 
-    on gui_message(update_selection):
+    on gui_message(update_selection_button):
         sel = grid_picker.get_selected()
         for go in sel:
             # Remove from grid_data file data

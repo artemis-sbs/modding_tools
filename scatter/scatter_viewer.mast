@@ -154,7 +154,9 @@ ring_only = False
 
 
 
-======= camera_orbit =========
+# Not `camera_orbit`: since 2026-08 that is a library function (procedural/gui/camera.py),
+# and a label may not share a name with a MAST global - the story would not compile.
+======= scatter_camera_orbit =========
     source = Vec3(0,0, dolly * -10 + -1000)
     track = Vec(0,0,0)
     # set_pos(camera, source)

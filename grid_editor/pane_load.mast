@@ -27,14 +27,16 @@
                     grid_data_mod_name = grid_data_file_.mod
                     grid_data_file_name = grid_data_file_.file
                     grid_theme_file_name = grid_data_file_.theme
-                    await task_schedule(load_data)
+                    await task_schedule(grid_load_data)
                     jump grid_editor_client_start
 
 
     jump finish_layout
 
 
-===== load_data =====
+# Not `load_data`: since 2026-07 that is a library function (sbs_utils fs.load_data),
+# and a label may not share a name with a MAST global - the story would not compile.
+===== grid_load_data =====
 
     # Expect it to load, i.e. don't use previous data
     shared grid_data = load_json_data(grid_data_file_name)
